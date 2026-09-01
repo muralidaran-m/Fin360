@@ -100,15 +100,3 @@ export async function updateRow(
   }
   await row.save()
 }
-
-/** Creates any missing sheet tabs with their header row. Idempotent. */
-export async function ensureSheetsExist(): Promise<void> {
-  const doc = await getDoc()
-  for (const [sheetName, headers] of Object.entries(SHEET_HEADERS)) {
-    const existing = doc.sheetsByTitle[sheetName]
-    if (existing) {
-      continue
-    }
-    await doc.addSheet({ title: sheetName, headerValues: headers })
-  }
-}
