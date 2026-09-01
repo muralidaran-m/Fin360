@@ -8,6 +8,7 @@ import { toast } from "sonner"
 
 import { createTransactionAction } from "@/app/(app)/actions"
 import { CategoryCombobox } from "@/components/category-combobox"
+import { PaymentModeCombobox } from "@/components/payment-mode-combobox"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -19,7 +20,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
-import type { AddedBy, Category } from "@/lib/types"
+import type { AddedBy, Category, PaymentMode } from "@/lib/types"
 import { transactionSchema, type TransactionFormValues } from "@/lib/validation"
 
 const ADDED_BY_STORAGE_KEY = "fin360:addedBy"
@@ -34,11 +35,15 @@ function today(): string {
 
 export function TransactionForm({
   categories,
+  paymentModes,
   onCategoryCreated,
+  onPaymentModeCreated,
   onSuccess,
 }: {
   categories: Category[]
+  paymentModes: PaymentMode[]
   onCategoryCreated: (category: Category) => void
+  onPaymentModeCreated: (paymentMode: PaymentMode) => void
   onSuccess: () => void
 }) {
   const router = useRouter()
@@ -53,6 +58,7 @@ export function TransactionForm({
       Note: "",
       IsRecurring: false,
       AddedBy: "User1",
+      PaymentModeID: "",
     },
   })
 
@@ -70,8 +76,14 @@ export function TransactionForm({
       return
     }
 
+    const paymentMode = paymentModes.find((p) => p.PaymentModeID === values.PaymentModeID)
+    if (!paymentMode) {
+      form.setError("PaymentModeID", { message: "Select a payment mode" })
+      return
+    }
+
     startTransition(async () => {
-      const result = await createTransactionAction(values, category)
+      const result = await createTransactionAction(values, category, paymentMode)
       if (result.error) {
         form.setError("root", { message: result.error })
         return
@@ -86,6 +98,7 @@ export function TransactionForm({
         Note: "",
         IsRecurring: false,
         AddedBy: values.AddedBy,
+        PaymentModeID: "",
       })
       router.refresh()
       onSuccess()
@@ -134,6 +147,25 @@ export function TransactionForm({
                   value={field.value}
                   onChange={field.onChange}
                   onCategoryCreated={onCategoryCreated}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="PaymentModeID"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Payment mode</FormLabel>
+              <FormControl>
+                <PaymentModeCombobox
+                  paymentModes={paymentModes}
+                  value={field.value}
+                  onChange={field.onChange}
+                  onPaymentModeCreated={onPaymentModeCreated}
                 />
               </FormControl>
               <FormMessage />

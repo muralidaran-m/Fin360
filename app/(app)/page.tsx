@@ -108,6 +108,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
                       </div>
                       <p className="text-muted-foreground truncate text-xs">
                         {tx.Date} · {tx.AddedBy}
+                        {tx.PaymentModeName ? ` · ${tx.PaymentModeName}` : ""}
                         {tx.Note ? ` · ${tx.Note}` : ""}
                       </p>
                     </div>

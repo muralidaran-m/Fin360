@@ -4,10 +4,17 @@ import { unstable_cache as cache, updateTag } from "next/cache"
 import { v4 as uuid } from "uuid"
 
 import { appendRow, getRows, updateRow } from "@/lib/sheets"
-import { SHEET_NAMES, type Category, type SandboxPlan, type Transaction } from "@/lib/types"
+import {
+  SHEET_NAMES,
+  type Category,
+  type PaymentMode,
+  type SandboxPlan,
+  type Transaction,
+} from "@/lib/types"
 
 const TAGS = {
   categories: "categories",
+  paymentModes: "payment_modes",
   transactions: "transactions",
   sandboxPlans: "sandbox_plans",
 } as const
@@ -44,6 +51,12 @@ export const getTransactions = cache(
   { tags: [TAGS.transactions] }
 )
 
+export const getPaymentModes = cache(
+  async (): Promise<PaymentMode[]> => getRows<PaymentMode>(SHEET_NAMES.PaymentModes),
+  ["payment_modes"],
+  { tags: [TAGS.paymentModes] }
+)
+
 export const getSandboxPlans = cache(
   async (): Promise<SandboxPlan[]> => {
     const rows = await getRows<Record<string, unknown>>(SHEET_NAMES.SandboxPlans)
@@ -60,6 +73,15 @@ export async function addCategory(
   await appendRow(SHEET_NAMES.Categories, category)
   updateTag(TAGS.categories)
   return category
+}
+
+export async function addPaymentMode(
+  input: Omit<PaymentMode, "PaymentModeID">
+): Promise<PaymentMode> {
+  const paymentMode: PaymentMode = { ...input, PaymentModeID: uuid() }
+  await appendRow(SHEET_NAMES.PaymentModes, paymentMode)
+  updateTag(TAGS.paymentModes)
+  return paymentMode
 }
 
 export async function addTransaction(

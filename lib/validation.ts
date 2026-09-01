@@ -13,6 +13,12 @@ export const categorySchema = z.object({
 
 export type CategoryFormValues = z.infer<typeof categorySchema>
 
+export const paymentModeSchema = z.object({
+  Name: z.string().trim().min(1, "Name is required").max(40),
+})
+
+export type PaymentModeFormValues = z.infer<typeof paymentModeSchema>
+
 export const transactionSchema = z.object({
   Amount: z.coerce
     .number({ invalid_type_error: "Amount is required" })
@@ -22,6 +28,7 @@ export const transactionSchema = z.object({
   Note: z.string().trim().max(200),
   IsRecurring: z.boolean(),
   AddedBy: z.enum(["User1", "User2"]),
+  PaymentModeID: z.string().min(1, "Payment mode is required"),
 })
 
 export type TransactionFormValues = z.infer<typeof transactionSchema>

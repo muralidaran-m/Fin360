@@ -1,13 +1,17 @@
 import { AddCategoryButton } from "@/app/(app)/settings/add-category-button"
+import { AddPaymentModeButton } from "@/app/(app)/settings/add-payment-mode-button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getCategories } from "@/lib/data"
+import { getCategories, getPaymentModes } from "@/lib/data"
 import { getCategoryIcon } from "@/lib/icons"
 
 export const dynamic = "force-dynamic"
 
 export default async function SettingsPage() {
-  const categories = await getCategories()
+  const [categories, paymentModes] = await Promise.all([
+    getCategories(),
+    getPaymentModes(),
+  ])
 
   return (
     <div className="flex flex-col gap-6">
@@ -44,6 +48,31 @@ export default async function SettingsPage() {
                   </li>
                 )
               })}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Payment Modes</CardTitle>
+          <AddPaymentModeButton />
+        </CardHeader>
+        <CardContent>
+          {paymentModes.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              No payment modes yet. Add your first one.
+            </p>
+          ) : (
+            <ul className="divide-y">
+              {paymentModes.map((paymentMode) => (
+                <li
+                  key={paymentMode.PaymentModeID}
+                  className="flex items-center py-3 first:pt-0 last:pb-0"
+                >
+                  <span className="flex-1 font-medium">{paymentMode.Name}</span>
+                </li>
+              ))}
             </ul>
           )}
         </CardContent>

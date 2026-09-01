@@ -1,8 +1,8 @@
 "use server"
 
-import { addCategory, addTransaction } from "@/lib/data"
-import { categorySchema, transactionSchema } from "@/lib/validation"
-import type { Category } from "@/lib/types"
+import { addCategory, addPaymentMode, addTransaction } from "@/lib/data"
+import { categorySchema, paymentModeSchema, transactionSchema } from "@/lib/validation"
+import type { Category, PaymentMode } from "@/lib/types"
 
 export type ActionState = { error?: string }
 
@@ -26,6 +26,23 @@ export async function createCategoryAction(
   return { category }
 }
 
+export type PaymentModeActionState = { error?: string; paymentMode?: PaymentMode }
+
+export async function createPaymentModeAction(
+  formData: FormData
+): Promise<PaymentModeActionState> {
+  const parsed = paymentModeSchema.safeParse({
+    Name: formData.get("Name"),
+  })
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid payment mode" }
+  }
+
+  const paymentMode = await addPaymentMode(parsed.data)
+  return { paymentMode }
+}
+
 export type CreateTransactionInput = {
   Amount: number
   CategoryID: string
@@ -33,11 +50,13 @@ export type CreateTransactionInput = {
   Note: string
   IsRecurring: boolean
   AddedBy: "User1" | "User2"
+  PaymentModeID: string
 }
 
 export async function createTransactionAction(
   input: CreateTransactionInput,
-  category: Pick<Category, "CategoryID" | "Name" | "Type">
+  category: Pick<Category, "CategoryID" | "Name" | "Type">,
+  paymentMode: Pick<PaymentMode, "PaymentModeID" | "Name">
 ): Promise<ActionState> {
   const parsed = transactionSchema.safeParse(input)
 
@@ -49,6 +68,10 @@ export async function createTransactionAction(
     return { error: "Category mismatch" }
   }
 
+  if (paymentMode.PaymentModeID !== parsed.data.PaymentModeID) {
+    return { error: "Payment mode mismatch" }
+  }
+
   await addTransaction({
     Date: parsed.data.Date,
     Amount: parsed.data.Amount,
@@ -58,6 +81,8 @@ export async function createTransactionAction(
     AddedBy: parsed.data.AddedBy,
     Note: parsed.data.Note,
     IsRecurring: parsed.data.IsRecurring,
+    PaymentModeID: parsed.data.PaymentModeID,
+    PaymentModeName: paymentMode.Name,
   })
 
   return {}

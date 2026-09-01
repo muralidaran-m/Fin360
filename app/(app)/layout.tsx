@@ -3,14 +3,17 @@ import Link from "next/link"
 import { logout } from "@/app/login/actions"
 import { QuickAddTransaction } from "@/components/quick-add-transaction"
 import { Button } from "@/components/ui/button"
-import { getCategories } from "@/lib/data"
+import { getCategories, getPaymentModes } from "@/lib/data"
 
 export default async function AppLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const categories = await getCategories()
+  const [categories, paymentModes] = await Promise.all([
+    getCategories(),
+    getPaymentModes(),
+  ])
 
   return (
     <div className="flex min-h-svh flex-col">
@@ -32,7 +35,7 @@ export default async function AppLayout({
 
       <main className="mx-auto w-full max-w-2xl flex-1 p-4">{children}</main>
 
-      <QuickAddTransaction categories={categories} />
+      <QuickAddTransaction categories={categories} paymentModes={paymentModes} />
     </div>
   )
 }

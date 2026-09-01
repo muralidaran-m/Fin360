@@ -8,6 +8,11 @@ export type Category = {
   ColorHex: string
 }
 
+export type PaymentMode = {
+  PaymentModeID: string
+  Name: string
+}
+
 export type TransactionType = "Expense" | "Income"
 
 export type AddedBy = "User1" | "User2"
@@ -22,6 +27,8 @@ export type Transaction = {
   AddedBy: AddedBy
   Note: string
   IsRecurring: boolean
+  PaymentModeID: string
+  PaymentModeName: string
 }
 
 export type SandboxPlan = {
@@ -35,6 +42,7 @@ export type SandboxPlan = {
 
 export const SHEET_NAMES = {
   Categories: "Categories",
+  PaymentModes: "Payment_Modes",
   Transactions: "Transactions",
   SandboxPlans: "Sandbox_Plans",
 } as const
@@ -43,6 +51,7 @@ export type SheetName = (typeof SHEET_NAMES)[keyof typeof SHEET_NAMES]
 
 export const SHEET_HEADERS: Record<SheetName, string[]> = {
   Categories: ["CategoryID", "Name", "Type", "Icon", "ColorHex"],
+  Payment_Modes: ["PaymentModeID", "Name"],
   Transactions: [
     "TxID",
     "Date",
@@ -53,6 +62,8 @@ export const SHEET_HEADERS: Record<SheetName, string[]> = {
     "AddedBy",
     "Note",
     "IsRecurring",
+    "PaymentModeID",
+    "PaymentModeName",
   ],
   Sandbox_Plans: [
     "PlanID",
