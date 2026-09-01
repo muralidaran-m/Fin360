@@ -26,6 +26,23 @@ export function QuickAddTransaction({
   const [categories, setCategories] = useState(initialCategories)
   const [paymentModes, setPaymentModes] = useState(initialPaymentModes)
 
+  // AppLayout doesn't remount on navigation, so when Settings triggers a
+  // router.refresh(), these props change without this component ever
+  // remounting. Adjust the local (optimistic-append) copies during render
+  // rather than in an effect, per https://react.dev/learn/you-might-not-need-an-effect.
+  const [prevInitialCategories, setPrevInitialCategories] = useState(initialCategories)
+  if (initialCategories !== prevInitialCategories) {
+    setPrevInitialCategories(initialCategories)
+    setCategories(initialCategories)
+  }
+
+  const [prevInitialPaymentModes, setPrevInitialPaymentModes] =
+    useState(initialPaymentModes)
+  if (initialPaymentModes !== prevInitialPaymentModes) {
+    setPrevInitialPaymentModes(initialPaymentModes)
+    setPaymentModes(initialPaymentModes)
+  }
+
   return (
     <>
       <Button
