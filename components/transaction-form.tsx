@@ -109,7 +109,12 @@ export function TransactionForm({
                   min="0"
                   autoFocus
                   {...field}
-                  onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                  value={Number.isNaN(field.value) ? "" : field.value}
+                  onChange={(e) =>
+                    field.onChange(
+                      e.target.value === "" ? NaN : e.target.valueAsNumber
+                    )
+                  }
                 />
               </FormControl>
               <FormMessage />

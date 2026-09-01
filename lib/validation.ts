@@ -14,7 +14,9 @@ export const categorySchema = z.object({
 export type CategoryFormValues = z.infer<typeof categorySchema>
 
 export const transactionSchema = z.object({
-  Amount: z.coerce.number().positive("Amount must be greater than 0"),
+  Amount: z.coerce
+    .number({ invalid_type_error: "Amount is required" })
+    .positive("Amount must be greater than 0"),
   CategoryID: z.string().min(1, "Category is required"),
   Date: z.string().min(1, "Date is required"),
   Note: z.string().trim().max(200),
