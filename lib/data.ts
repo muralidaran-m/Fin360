@@ -3,12 +3,16 @@ import "server-only"
 import { unstable_cache as cache, updateTag } from "next/cache"
 import { v4 as uuid } from "uuid"
 
-import { appendRow, getRows, updateRow } from "@/lib/sheets"
+import { appendRow, getRows, updateRow, upsertRow } from "@/lib/sheets"
 import {
+  DEFAULT_ADDED_BY_NAMES,
+  SETTING_KEYS,
   SHEET_NAMES,
+  type AddedBy,
   type Category,
   type PaymentMode,
   type SandboxPlan,
+  type Setting,
   type Transaction,
 } from "@/lib/types"
 
@@ -17,6 +21,7 @@ const TAGS = {
   paymentModes: "payment_modes",
   transactions: "transactions",
   sandboxPlans: "sandbox_plans",
+  settings: "settings",
 } as const
 
 function parseTransaction(raw: Record<string, unknown>): Transaction {
@@ -66,6 +71,32 @@ export const getSandboxPlans = cache(
   { tags: [TAGS.sandboxPlans] }
 )
 
+const getSettingsRaw = cache(
+  async (): Promise<Setting[]> => getRows<Setting>(SHEET_NAMES.Settings),
+  ["settings"],
+  { tags: [TAGS.settings] }
+)
+
+/** Display names for AddedBy, falling back to "User 1"/"User 2" until customized. */
+export async function getAddedByNames(): Promise<Record<AddedBy, string>> {
+  const rows = await getSettingsRaw()
+  const byKey = new Map(rows.map((r) => [r.Key, r.Value]))
+  return {
+    User1: byKey.get(SETTING_KEYS.User1Name) || DEFAULT_ADDED_BY_NAMES.User1,
+    User2: byKey.get(SETTING_KEYS.User2Name) || DEFAULT_ADDED_BY_NAMES.User2,
+  }
+}
+
+export async function updateAddedByNames(names: Record<AddedBy, string>): Promise<void> {
+  await upsertRow(SHEET_NAMES.Settings, "Key", SETTING_KEYS.User1Name, {
+    Value: names.User1,
+  })
+  await upsertRow(SHEET_NAMES.Settings, "Key", SETTING_KEYS.User2Name, {
+    Value: names.User2,
+  })
+  updateTag(TAGS.settings)
+}
+
 export async function addCategory(
   input: Omit<Category, "CategoryID">
 ): Promise<Category> {
@@ -75,6 +106,14 @@ export async function addCategory(
   return category
 }
 
+export async function updateCategory(
+  categoryId: string,
+  input: Omit<Category, "CategoryID">
+): Promise<void> {
+  await updateRow(SHEET_NAMES.Categories, "CategoryID", categoryId, input)
+  updateTag(TAGS.categories)
+}
+
 export async function addPaymentMode(
   input: Omit<PaymentMode, "PaymentModeID">
 ): Promise<PaymentMode> {
@@ -82,6 +121,14 @@ export async function addPaymentMode(
   await appendRow(SHEET_NAMES.PaymentModes, paymentMode)
   updateTag(TAGS.paymentModes)
   return paymentMode
+}
+
+export async function updatePaymentMode(
+  paymentModeId: string,
+  input: Omit<PaymentMode, "PaymentModeID">
+): Promise<void> {
+  await updateRow(SHEET_NAMES.PaymentModes, "PaymentModeID", paymentModeId, input)
+  updateTag(TAGS.paymentModes)
 }
 
 export async function addTransaction(

@@ -31,6 +31,21 @@ export type Transaction = {
   PaymentModeName: string
 }
 
+export type Setting = {
+  Key: string
+  Value: string
+}
+
+export const SETTING_KEYS = {
+  User1Name: "User1Name",
+  User2Name: "User2Name",
+} as const
+
+export const DEFAULT_ADDED_BY_NAMES: Record<AddedBy, string> = {
+  User1: "User 1",
+  User2: "User 2",
+}
+
 export type SandboxPlan = {
   PlanID: string
   PlanName: string
@@ -45,6 +60,7 @@ export const SHEET_NAMES = {
   PaymentModes: "Payment_Modes",
   Transactions: "Transactions",
   SandboxPlans: "Sandbox_Plans",
+  Settings: "Settings",
 } as const
 
 export type SheetName = (typeof SHEET_NAMES)[keyof typeof SHEET_NAMES]
@@ -73,4 +89,5 @@ export const SHEET_HEADERS: Record<SheetName, string[]> = {
     "TargetDate",
     "EstimatedMonthlyImpact",
   ],
+  Settings: ["Key", "Value"],
 }

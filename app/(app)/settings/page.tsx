@@ -1,20 +1,33 @@
 import { AddCategoryButton } from "@/app/(app)/settings/add-category-button"
 import { AddPaymentModeButton } from "@/app/(app)/settings/add-payment-mode-button"
+import { EditCategoryButton } from "@/app/(app)/settings/edit-category-button"
+import { EditPaymentModeButton } from "@/app/(app)/settings/edit-payment-mode-button"
+import { HouseholdSettingsForm } from "@/components/household-settings-form"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getCategories, getPaymentModes } from "@/lib/data"
+import { getAddedByNames, getCategories, getPaymentModes } from "@/lib/data"
 import { getCategoryIcon } from "@/lib/icons"
 
 export const dynamic = "force-dynamic"
 
 export default async function SettingsPage() {
-  const [categories, paymentModes] = await Promise.all([
+  const [categories, paymentModes, addedByNames] = await Promise.all([
     getCategories(),
     getPaymentModes(),
+    getAddedByNames(),
   ])
 
   return (
     <div className="flex flex-col gap-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Household</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <HouseholdSettingsForm names={addedByNames} />
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Categories</CardTitle>
@@ -45,6 +58,7 @@ export default async function SettingsPage() {
                     </div>
                     <span className="flex-1 font-medium">{category.Name}</span>
                     <Badge variant="secondary">{category.Type}</Badge>
+                    <EditCategoryButton category={category} />
                   </li>
                 )
               })}
@@ -71,6 +85,7 @@ export default async function SettingsPage() {
                   className="flex items-center py-3 first:pt-0 last:pb-0"
                 >
                   <span className="flex-1 font-medium">{paymentMode.Name}</span>
+                  <EditPaymentModeButton paymentMode={paymentMode} />
                 </li>
               ))}
             </ul>

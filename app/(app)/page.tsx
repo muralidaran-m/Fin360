@@ -16,7 +16,7 @@ import {
   totalRecurringExpense,
   type Timeframe,
 } from "@/lib/analytics"
-import { getCategories, getTransactions } from "@/lib/data"
+import { getAddedByNames, getCategories, getTransactions } from "@/lib/data"
 import { getCategoryIcon } from "@/lib/icons"
 
 export const dynamic = "force-dynamic"
@@ -29,9 +29,10 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const params = await searchParams
   const timeframe = parseTimeframe(params.range)
 
-  const [categories, transactions] = await Promise.all([
+  const [categories, transactions, addedByNames] = await Promise.all([
     getCategories(),
     getTransactions(),
+    getAddedByNames(),
   ])
 
   const categoriesById = new Map(categories.map((c) => [c.CategoryID, c]))
@@ -60,7 +61,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 
       <div className="grid gap-6 md:grid-cols-2">
         <BreakdownDonut breakdown={breakdown} />
-        <HouseholdSplitBar split={split} />
+        <HouseholdSplitBar split={split} names={addedByNames} />
       </div>
 
       <BurnRateChart points={burn} />
@@ -107,7 +108,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
                         ) : null}
                       </div>
                       <p className="text-muted-foreground truncate text-xs">
-                        {tx.Date} · {tx.AddedBy}
+                        {tx.Date} · {addedByNames[tx.AddedBy]}
                         {tx.PaymentModeName ? ` · ${tx.PaymentModeName}` : ""}
                         {tx.Note ? ` · ${tx.Note}` : ""}
                       </p>

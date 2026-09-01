@@ -11,14 +11,16 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import type { Category, PaymentMode } from "@/lib/types"
+import type { AddedBy, Category, PaymentMode } from "@/lib/types"
 
 export function QuickAddTransaction({
   categories: initialCategories,
   paymentModes: initialPaymentModes,
+  addedByNames,
 }: {
   categories: Category[]
   paymentModes: PaymentMode[]
+  addedByNames: Record<AddedBy, string>
 }) {
   const [open, setOpen] = useState(false)
   const [categories, setCategories] = useState(initialCategories)
@@ -47,6 +49,7 @@ export function QuickAddTransaction({
             <TransactionForm
               categories={categories}
               paymentModes={paymentModes}
+              addedByNames={addedByNames}
               onCategoryCreated={(category) =>
                 setCategories((prev) => [...prev, category])
               }

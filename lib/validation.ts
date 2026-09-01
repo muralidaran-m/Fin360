@@ -32,3 +32,10 @@ export const transactionSchema = z.object({
 })
 
 export type TransactionFormValues = z.infer<typeof transactionSchema>
+
+export const householdSettingsSchema = z.object({
+  User1Name: z.string().trim().min(1, "Name is required").max(40),
+  User2Name: z.string().trim().min(1, "Name is required").max(40),
+})
+
+export type HouseholdSettingsFormValues = z.infer<typeof householdSettingsSchema>

@@ -100,3 +100,23 @@ export async function updateRow(
   }
   await row.save()
 }
+
+/** Like updateRow, but appends a new row instead of throwing if none is found. */
+export async function upsertRow(
+  sheetName: SheetName,
+  idField: string,
+  idValue: string,
+  data: Record<string, CellValue>
+): Promise<void> {
+  const sheet = await getSheet(sheetName)
+  const rows = await sheet.getRows()
+  const row = rows.find((r) => r.get(idField) === idValue)
+  if (row) {
+    for (const [key, value] of Object.entries(data)) {
+      row.set(key, value)
+    }
+    await row.save()
+    return
+  }
+  await sheet.addRow({ [idField]: idValue, ...data })
+}

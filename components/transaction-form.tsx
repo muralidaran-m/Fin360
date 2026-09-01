@@ -24,10 +24,7 @@ import type { AddedBy, Category, PaymentMode } from "@/lib/types"
 import { transactionSchema, type TransactionFormValues } from "@/lib/validation"
 
 const ADDED_BY_STORAGE_KEY = "fin360:addedBy"
-const ADDED_BY_OPTIONS: { value: AddedBy; label: string }[] = [
-  { value: "User1", label: "User 1" },
-  { value: "User2", label: "User 2" },
-]
+const ADDED_BY_VALUES: AddedBy[] = ["User1", "User2"]
 
 function today(): string {
   return new Date().toISOString().slice(0, 10)
@@ -36,12 +33,14 @@ function today(): string {
 export function TransactionForm({
   categories,
   paymentModes,
+  addedByNames,
   onCategoryCreated,
   onPaymentModeCreated,
   onSuccess,
 }: {
   categories: Category[]
   paymentModes: PaymentMode[]
+  addedByNames: Record<AddedBy, string>
   onCategoryCreated: (category: Category) => void
   onPaymentModeCreated: (paymentMode: PaymentMode) => void
   onSuccess: () => void
@@ -221,14 +220,14 @@ export function TransactionForm({
             <FormItem>
               <FormLabel>Added by</FormLabel>
               <div className="grid grid-cols-2 gap-2">
-                {ADDED_BY_OPTIONS.map((option) => (
+                {ADDED_BY_VALUES.map((value) => (
                   <Button
-                    key={option.value}
+                    key={value}
                     type="button"
-                    variant={field.value === option.value ? "default" : "outline"}
-                    onClick={() => field.onChange(option.value)}
+                    variant={field.value === value ? "default" : "outline"}
+                    onClick={() => field.onChange(value)}
                   >
-                    {option.label}
+                    {addedByNames[value]}
                   </Button>
                 ))}
               </div>

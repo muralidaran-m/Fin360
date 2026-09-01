@@ -4,7 +4,7 @@ import { useTransition } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 
-import { createCategoryAction } from "@/app/(app)/actions"
+import { createCategoryAction, updateCategoryAction } from "@/app/(app)/actions"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -31,18 +31,20 @@ const CATEGORY_TYPES: CategoryType[] = ["Need", "Want", "Income", "Savings"]
 const DEFAULT_COLOR = "#6366f1"
 
 export function CategoryForm({
+  category,
   onSuccess,
 }: {
+  category?: Category
   onSuccess: (category: Category) => void
 }) {
   const [pending, startTransition] = useTransition()
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
     defaultValues: {
-      Name: "",
-      Type: "Want",
-      Icon: CATEGORY_ICON_NAMES[0],
-      ColorHex: DEFAULT_COLOR,
+      Name: category?.Name ?? "",
+      Type: category?.Type ?? "Want",
+      Icon: category?.Icon ?? CATEGORY_ICON_NAMES[0],
+      ColorHex: category?.ColorHex ?? DEFAULT_COLOR,
     },
   })
 
@@ -53,6 +55,16 @@ export function CategoryForm({
       formData.set("Type", values.Type)
       formData.set("Icon", values.Icon)
       formData.set("ColorHex", values.ColorHex)
+
+      if (category) {
+        const result = await updateCategoryAction(category.CategoryID, formData)
+        if (result.error) {
+          form.setError("root", { message: result.error })
+          return
+        }
+        onSuccess({ ...values, CategoryID: category.CategoryID })
+        return
+      }
 
       const result = await createCategoryAction(formData)
       if (result.error || !result.category) {
@@ -167,7 +179,13 @@ export function CategoryForm({
         ) : null}
 
         <Button type="submit" disabled={pending}>
-          {pending ? "Adding..." : "Add category"}
+          {pending
+            ? category
+              ? "Saving..."
+              : "Adding..."
+            : category
+              ? "Save changes"
+              : "Add category"}
         </Button>
       </form>
     </Form>

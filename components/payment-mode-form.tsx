@@ -4,7 +4,7 @@ import { useTransition } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 
-import { createPaymentModeAction } from "@/app/(app)/actions"
+import { createPaymentModeAction, updatePaymentModeAction } from "@/app/(app)/actions"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -19,20 +19,32 @@ import type { PaymentMode } from "@/lib/types"
 import { paymentModeSchema, type PaymentModeFormValues } from "@/lib/validation"
 
 export function PaymentModeForm({
+  paymentMode,
   onSuccess,
 }: {
+  paymentMode?: PaymentMode
   onSuccess: (paymentMode: PaymentMode) => void
 }) {
   const [pending, startTransition] = useTransition()
   const form = useForm<PaymentModeFormValues>({
     resolver: zodResolver(paymentModeSchema),
-    defaultValues: { Name: "" },
+    defaultValues: { Name: paymentMode?.Name ?? "" },
   })
 
   function onSubmit(values: PaymentModeFormValues) {
     startTransition(async () => {
       const formData = new FormData()
       formData.set("Name", values.Name)
+
+      if (paymentMode) {
+        const result = await updatePaymentModeAction(paymentMode.PaymentModeID, formData)
+        if (result.error) {
+          form.setError("root", { message: result.error })
+          return
+        }
+        onSuccess({ ...values, PaymentModeID: paymentMode.PaymentModeID })
+        return
+      }
 
       const result = await createPaymentModeAction(formData)
       if (result.error || !result.paymentMode) {
@@ -68,7 +80,13 @@ export function PaymentModeForm({
         ) : null}
 
         <Button type="submit" disabled={pending}>
-          {pending ? "Adding..." : "Add payment mode"}
+          {pending
+            ? paymentMode
+              ? "Saving..."
+              : "Adding..."
+            : paymentMode
+              ? "Save changes"
+              : "Add payment mode"}
         </Button>
       </form>
     </Form>
