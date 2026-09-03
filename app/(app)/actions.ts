@@ -3,6 +3,7 @@
 import {
   addCategory,
   addPaymentMode,
+  addSandboxPlan,
   addTransaction,
   updateAddedByNames,
   updateCategory,
@@ -12,9 +13,10 @@ import {
   categorySchema,
   householdSettingsSchema,
   paymentModeSchema,
+  sandboxPlanSchema,
   transactionSchema,
 } from "@/lib/validation"
-import type { Category, PaymentMode } from "@/lib/types"
+import type { Category, PaymentMode, SandboxPlan } from "@/lib/types"
 
 export type ActionState = { error?: string }
 
@@ -151,4 +153,25 @@ export async function createTransactionAction(
   })
 
   return {}
+}
+
+export type SandboxPlanActionState = { error?: string; plan?: SandboxPlan }
+
+export async function createSandboxPlanAction(
+  formData: FormData
+): Promise<SandboxPlanActionState> {
+  const parsed = sandboxPlanSchema.safeParse({
+    PlanName: formData.get("PlanName"),
+    TargetAmount: formData.get("TargetAmount"),
+    CurrentSaved: formData.get("CurrentSaved"),
+    TargetDate: formData.get("TargetDate"),
+    EstimatedMonthlyImpact: formData.get("EstimatedMonthlyImpact"),
+  })
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid plan" }
+  }
+
+  const plan = await addSandboxPlan(parsed.data)
+  return { plan }
 }
