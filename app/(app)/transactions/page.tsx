@@ -1,5 +1,5 @@
-import { GroupedTransactionList } from "@/components/transactions/grouped-transaction-list"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { TransactionsExplorer } from "@/components/transactions/transactions-explorer"
+import { Card, CardContent } from "@/components/ui/card"
 import { getAddedByNames, getCategories, getTransactions } from "@/lib/data"
 
 export const dynamic = "force-dynamic"
@@ -11,18 +11,13 @@ export default async function TransactionsPage() {
     getAddedByNames(),
   ])
 
-  const categoriesById = new Map(categories.map((c) => [c.CategoryID, c]))
-
   return (
     <div className="flex flex-col gap-6">
       <Card>
-        <CardHeader>
-          <CardTitle>Transactions</CardTitle>
-        </CardHeader>
         <CardContent>
-          <GroupedTransactionList
+          <TransactionsExplorer
             transactions={transactions}
-            categoriesById={categoriesById}
+            categories={categories}
             addedByNames={addedByNames}
           />
         </CardContent>

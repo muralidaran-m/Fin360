@@ -23,11 +23,13 @@ export function GroupedTransactionList({
     <div className="flex flex-col gap-6">
       {monthGroups.map((monthGroup) => (
         <div key={monthGroup.month} className="flex flex-col gap-4">
-          <h2 className="text-primary text-sm font-semibold">{monthGroup.label}</h2>
+          <h2 className="text-primary border-primary/30 border-b-2 pb-1.5 text-base font-bold tracking-tight">
+            {monthGroup.label}
+          </h2>
           <div className="flex flex-col gap-3">
             {monthGroup.dateGroups.map((dateGroup) => (
               <div key={dateGroup.date}>
-                <p className="text-muted-foreground mb-1 text-xs font-medium">
+                <p className="text-foreground mb-1.5 text-sm font-semibold">
                   {dateGroup.label}
                 </p>
                 <ul className="divide-y">
