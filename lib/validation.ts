@@ -39,3 +39,19 @@ export const householdSettingsSchema = z.object({
 })
 
 export type HouseholdSettingsFormValues = z.infer<typeof householdSettingsSchema>
+
+export const sandboxPlanSchema = z.object({
+  PlanName: z.string().trim().min(1, "Name is required").max(60),
+  TargetAmount: z.coerce
+    .number({ invalid_type_error: "Target amount is required" })
+    .positive("Target amount must be greater than 0"),
+  CurrentSaved: z.coerce
+    .number({ invalid_type_error: "Amount saved is required" })
+    .min(0, "Amount saved cannot be negative"),
+  TargetDate: z.string().min(1, "Target date is required"),
+  EstimatedMonthlyImpact: z.coerce
+    .number({ invalid_type_error: "Monthly contribution is required" })
+    .min(0, "Monthly contribution cannot be negative"),
+})
+
+export type SandboxPlanFormValues = z.infer<typeof sandboxPlanSchema>
