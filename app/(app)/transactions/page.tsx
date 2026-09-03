@@ -1,4 +1,4 @@
-import { TransactionList } from "@/components/transactions/transaction-list"
+import { GroupedTransactionList } from "@/components/transactions/grouped-transaction-list"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getAddedByNames, getCategories, getTransactions } from "@/lib/data"
 
@@ -12,7 +12,6 @@ export default async function TransactionsPage() {
   ])
 
   const categoriesById = new Map(categories.map((c) => [c.CategoryID, c]))
-  const sorted = [...transactions].sort((a, b) => b.Date.localeCompare(a.Date))
 
   return (
     <div className="flex flex-col gap-6">
@@ -21,8 +20,8 @@ export default async function TransactionsPage() {
           <CardTitle>Transactions</CardTitle>
         </CardHeader>
         <CardContent>
-          <TransactionList
-            transactions={sorted}
+          <GroupedTransactionList
+            transactions={transactions}
             categoriesById={categoriesById}
             addedByNames={addedByNames}
           />

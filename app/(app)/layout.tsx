@@ -19,9 +19,9 @@ export default async function AppLayout({
 
   return (
     <div className="flex min-h-svh flex-col">
-      <header className="flex items-center justify-between border-b p-4">
+      <header className="bg-card flex items-center justify-between border-b p-4">
         <div className="flex items-center gap-4">
-          <Link href="/" className="text-lg font-semibold">
+          <Link href="/" className="text-primary text-lg font-semibold">
             Fin360
           </Link>
           <AppNav />
