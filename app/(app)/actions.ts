@@ -8,6 +8,7 @@ import {
   updateAddedByNames,
   updateCategory,
   updatePaymentMode,
+  updateTransaction,
 } from "@/lib/data"
 import {
   categorySchema,
@@ -140,6 +141,42 @@ export async function createTransactionAction(
   }
 
   await addTransaction({
+    Date: parsed.data.Date,
+    Amount: parsed.data.Amount,
+    Type: category.Type === "Income" ? "Income" : "Expense",
+    CategoryID: parsed.data.CategoryID,
+    CategoryName: category.Name,
+    AddedBy: parsed.data.AddedBy,
+    Note: parsed.data.Note,
+    IsRecurring: parsed.data.IsRecurring,
+    PaymentModeID: parsed.data.PaymentModeID,
+    PaymentModeName: paymentMode.Name,
+  })
+
+  return {}
+}
+
+export async function updateTransactionAction(
+  txId: string,
+  input: CreateTransactionInput,
+  category: Pick<Category, "CategoryID" | "Name" | "Type">,
+  paymentMode: Pick<PaymentMode, "PaymentModeID" | "Name">
+): Promise<ActionState> {
+  const parsed = transactionSchema.safeParse(input)
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid transaction" }
+  }
+
+  if (category.CategoryID !== parsed.data.CategoryID) {
+    return { error: "Category mismatch" }
+  }
+
+  if (paymentMode.PaymentModeID !== parsed.data.PaymentModeID) {
+    return { error: "Payment mode mismatch" }
+  }
+
+  await updateTransaction(txId, {
     Date: parsed.data.Date,
     Amount: parsed.data.Amount,
     Type: category.Type === "Income" ? "Income" : "Expense",

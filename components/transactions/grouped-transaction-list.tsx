@@ -1,15 +1,19 @@
 import { TransactionRow } from "@/components/transactions/transaction-list"
 import { groupTransactionsByMonthAndDate } from "@/lib/transaction-groups"
-import type { AddedBy, Category, Transaction } from "@/lib/types"
+import type { AddedBy, Category, PaymentMode, Transaction } from "@/lib/types"
 
 export function GroupedTransactionList({
   transactions,
   categoriesById,
+  categories,
+  paymentModes,
   addedByNames,
   emptyMessage = "No transactions yet. Tap the + button to add one.",
 }: {
   transactions: Transaction[]
   categoriesById: Map<string, Category>
+  categories: Category[]
+  paymentModes: PaymentMode[]
   addedByNames: Record<AddedBy, string>
   emptyMessage?: string
 }) {
@@ -39,6 +43,8 @@ export function GroupedTransactionList({
                       transaction={tx}
                       category={categoriesById.get(tx.CategoryID)}
                       addedByNames={addedByNames}
+                      categories={categories}
+                      paymentModes={paymentModes}
                     />
                   ))}
                 </ul>

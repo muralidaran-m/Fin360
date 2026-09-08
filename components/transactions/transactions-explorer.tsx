@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 
 import { GroupedTransactionList } from "@/components/transactions/grouped-transaction-list"
 import { Input } from "@/components/ui/input"
-import type { AddedBy, Category, Transaction } from "@/lib/types"
+import type { AddedBy, Category, PaymentMode, Transaction } from "@/lib/types"
 
 function matchesQuery(
   tx: Transaction,
@@ -29,10 +29,12 @@ function matchesQuery(
 export function TransactionsExplorer({
   transactions,
   categories,
+  paymentModes,
   addedByNames,
 }: {
   transactions: Transaction[]
   categories: Category[]
+  paymentModes: PaymentMode[]
   addedByNames: Record<AddedBy, string>
 }) {
   const [query, setQuery] = useState("")
@@ -110,6 +112,8 @@ export function TransactionsExplorer({
       <GroupedTransactionList
         transactions={filtered}
         categoriesById={categoriesById}
+        categories={categories}
+        paymentModes={paymentModes}
         addedByNames={addedByNames}
         emptyMessage={
           hasActiveFilters

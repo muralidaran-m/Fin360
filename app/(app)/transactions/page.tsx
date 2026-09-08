@@ -1,12 +1,13 @@
 import { TransactionsExplorer } from "@/components/transactions/transactions-explorer"
 import { Card, CardContent } from "@/components/ui/card"
-import { getAddedByNames, getCategories, getTransactions } from "@/lib/data"
+import { getAddedByNames, getCategories, getPaymentModes, getTransactions } from "@/lib/data"
 
 export const dynamic = "force-dynamic"
 
 export default async function TransactionsPage() {
-  const [categories, transactions, addedByNames] = await Promise.all([
+  const [categories, paymentModes, transactions, addedByNames] = await Promise.all([
     getCategories(),
+    getPaymentModes(),
     getTransactions(),
     getAddedByNames(),
   ])
@@ -18,6 +19,7 @@ export default async function TransactionsPage() {
           <TransactionsExplorer
             transactions={transactions}
             categories={categories}
+            paymentModes={paymentModes}
             addedByNames={addedByNames}
           />
         </CardContent>

@@ -53,6 +53,56 @@ export function totalRecurringExpense(transactions: Transaction[], now = new Dat
     .reduce((sum, t) => sum + t.Amount, 0)
 }
 
+/** Sum of all expense transactions for the current month. */
+export function totalSpend(transactions: Transaction[], now = new Date()): number {
+  const range = getTimeframeRange("current", now)
+  return filterByRange(transactions, range)
+    .filter((t) => t.Type === "Expense")
+    .reduce((sum, t) => sum + t.Amount, 0)
+}
+
+export type BreakdownDimension = "category" | "paymentMode" | "recurring"
+
+export type SpendByDimensionPoint = { key: string; label: string; amount: number }
+
+/** Expense totals grouped by the given dimension (category/payment mode/recurring), for the given range. */
+export function spendByDimension(
+  transactions: Transaction[],
+  categoriesById: Map<string, Category>,
+  range: DateRange,
+  dimension: BreakdownDimension
+): SpendByDimensionPoint[] {
+  const totals = new Map<string, { label: string; amount: number }>()
+
+  for (const t of filterByRange(transactions, range)) {
+    if (t.Type !== "Expense") continue
+
+    let key: string
+    let label: string
+    if (dimension === "category") {
+      key = t.CategoryID
+      label = categoriesById.get(t.CategoryID)?.Name ?? t.CategoryName ?? "Unknown"
+    } else if (dimension === "paymentMode") {
+      key = t.PaymentModeID
+      label = t.PaymentModeName || "Unknown"
+    } else {
+      key = t.IsRecurring ? "recurring" : "one-time"
+      label = t.IsRecurring ? "Recurring" : "One-time"
+    }
+
+    const existing = totals.get(key)
+    if (existing) {
+      existing.amount += t.Amount
+    } else {
+      totals.set(key, { label, amount: t.Amount })
+    }
+  }
+
+  return [...totals.entries()]
+    .map(([key, { label, amount }]) => ({ key, label, amount }))
+    .sort((a, b) => b.amount - a.amount)
+}
+
 export type BudgetBreakdown = Record<Extract<CategoryType, "Need" | "Want" | "Savings">, number>
 
 /** Expense totals grouped by category Type (Need/Want/Savings), for the given range. */

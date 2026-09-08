@@ -78,7 +78,18 @@ export function CategoryForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
+      <form
+        onSubmit={(e) => {
+          // Stop propagation: this form can be nested (via a Dialog portal)
+          // inside another form's React tree, and React re-dispatches
+          // bubbling events along that tree regardless of DOM portal
+          // boundaries — without this, submitting here also fires the
+          // ancestor form's onSubmit and its validation.
+          e.stopPropagation()
+          form.handleSubmit(onSubmit)(e)
+        }}
+        className="grid gap-4"
+      >
         <FormField
           control={form.control}
           name="Name"

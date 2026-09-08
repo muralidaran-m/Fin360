@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 
-import { createTransactionAction } from "@/app/(app)/actions"
+import { createTransactionAction, updateTransactionAction } from "@/app/(app)/actions"
 import { CategoryCombobox } from "@/components/category-combobox"
 import { PaymentModeCombobox } from "@/components/payment-mode-combobox"
 import { Button } from "@/components/ui/button"
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
-import type { AddedBy, Category, PaymentMode } from "@/lib/types"
+import type { AddedBy, Category, PaymentMode, Transaction } from "@/lib/types"
 import { transactionSchema, type TransactionFormValues } from "@/lib/validation"
 
 const ADDED_BY_STORAGE_KEY = "fin360:addedBy"
@@ -31,6 +31,7 @@ function today(): string {
 }
 
 export function TransactionForm({
+  transaction,
   categories,
   paymentModes,
   addedByNames,
@@ -38,6 +39,7 @@ export function TransactionForm({
   onPaymentModeCreated,
   onSuccess,
 }: {
+  transaction?: Transaction
   categories: Category[]
   paymentModes: PaymentMode[]
   addedByNames: Record<AddedBy, string>
@@ -47,26 +49,38 @@ export function TransactionForm({
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
+  const isEditing = Boolean(transaction)
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
-    defaultValues: {
-      Amount: 0,
-      CategoryID: "",
-      Date: today(),
-      Note: "",
-      IsRecurring: false,
-      AddedBy: "User1",
-      PaymentModeID: "",
-    },
+    defaultValues: transaction
+      ? {
+          Amount: transaction.Amount,
+          CategoryID: transaction.CategoryID,
+          Date: transaction.Date,
+          Note: transaction.Note,
+          IsRecurring: transaction.IsRecurring,
+          AddedBy: transaction.AddedBy,
+          PaymentModeID: transaction.PaymentModeID,
+        }
+      : {
+          Amount: 0,
+          CategoryID: "",
+          Date: today(),
+          Note: "",
+          IsRecurring: false,
+          AddedBy: "User1",
+          PaymentModeID: "",
+        },
   })
 
   useEffect(() => {
+    if (isEditing) return
     const stored = window.localStorage.getItem(ADDED_BY_STORAGE_KEY)
     if (stored === "User1" || stored === "User2") {
       form.setValue("AddedBy", stored)
     }
-  }, [form])
+  }, [form, isEditing])
 
   function onSubmit(values: TransactionFormValues) {
     const category = categories.find((c) => c.CategoryID === values.CategoryID)
@@ -82,23 +96,29 @@ export function TransactionForm({
     }
 
     startTransition(async () => {
-      const result = await createTransactionAction(values, category, paymentMode)
+      const result = transaction
+        ? await updateTransactionAction(transaction.TxID, values, category, paymentMode)
+        : await createTransactionAction(values, category, paymentMode)
       if (result.error) {
         form.setError("root", { message: result.error })
         return
       }
 
-      window.localStorage.setItem(ADDED_BY_STORAGE_KEY, values.AddedBy)
-      toast.success(`Added ${category.Name} — ₹${values.Amount}`)
-      form.reset({
-        Amount: 0,
-        CategoryID: "",
-        Date: today(),
-        Note: "",
-        IsRecurring: false,
-        AddedBy: values.AddedBy,
-        PaymentModeID: "",
-      })
+      if (transaction) {
+        toast.success(`Updated ${category.Name} — ₹${values.Amount}`)
+      } else {
+        window.localStorage.setItem(ADDED_BY_STORAGE_KEY, values.AddedBy)
+        toast.success(`Added ${category.Name} — ₹${values.Amount}`)
+        form.reset({
+          Amount: 0,
+          CategoryID: "",
+          Date: today(),
+          Note: "",
+          IsRecurring: false,
+          AddedBy: values.AddedBy,
+          PaymentModeID: "",
+        })
+      }
       router.refresh()
       onSuccess()
     })
@@ -242,7 +262,13 @@ export function TransactionForm({
         ) : null}
 
         <Button type="submit" disabled={pending} className="w-full">
-          {pending ? "Adding..." : "Add transaction"}
+          {pending
+            ? isEditing
+              ? "Saving..."
+              : "Adding..."
+            : isEditing
+              ? "Save changes"
+              : "Add transaction"}
         </Button>
       </form>
     </Form>
