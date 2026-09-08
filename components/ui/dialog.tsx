@@ -54,6 +54,10 @@ function DialogContent({
         data-slot="dialog-content"
         className={cn(
           "fixed top-1/2 left-1/2 z-50 grid max-h-[85vh] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          // base-ui suppresses a nested dialog's own backdrop so the parent
+          // dialog can be styled independently — dim/blur it ourselves via
+          // this pseudo-element while a dialog is stacked on top of it.
+          "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-xl after:bg-black/10 after:opacity-0 after:backdrop-blur-xs after:transition-opacity after:duration-150 data-nested-dialog-open:after:opacity-100",
           className
         )}
         {...props}

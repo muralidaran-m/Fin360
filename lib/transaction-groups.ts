@@ -28,11 +28,24 @@ function parseIsoDate(date: string): Date {
   return new Date(year, month - 1, day)
 }
 
+/**
+ * Sorts transactions most-recent-first: by Date descending, then by original
+ * order descending as a tiebreaker. Transactions carry no timestamp, so for
+ * same-day entries we treat later positions in the source array (i.e. more
+ * recently added rows) as more recent.
+ */
+export function sortTransactionsByRecency(transactions: Transaction[]): Transaction[] {
+  return transactions
+    .map((transaction, index) => ({ transaction, index }))
+    .sort((a, b) => b.transaction.Date.localeCompare(a.transaction.Date) || b.index - a.index)
+    .map(({ transaction }) => transaction)
+}
+
 /** Groups transactions by month, then by day, newest first within each level. */
 export function groupTransactionsByMonthAndDate(
   transactions: Transaction[]
 ): MonthGroup[] {
-  const sorted = [...transactions].sort((a, b) => b.Date.localeCompare(a.Date))
+  const sorted = sortTransactionsByRecency(transactions)
 
   const monthOrder: string[] = []
   const monthMap = new Map<string, Map<string, Transaction[]>>()

@@ -140,6 +140,14 @@ export async function addTransaction(
   return transaction
 }
 
+export async function updateTransaction(
+  txId: string,
+  input: Omit<Transaction, "TxID">
+): Promise<void> {
+  await updateRow(SHEET_NAMES.Transactions, "TxID", txId, input)
+  updateTag(TAGS.transactions)
+}
+
 export async function addSandboxPlan(
   input: Omit<SandboxPlan, "PlanID">
 ): Promise<SandboxPlan> {
