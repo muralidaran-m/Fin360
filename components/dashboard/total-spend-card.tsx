@@ -11,7 +11,7 @@ export function TotalSpendCard({
   const delta = previousAmount > 0 ? (amount - previousAmount) / previousAmount : null
 
   return (
-    <Card>
+    <Card size="sm">
       <CardHeader>
         <CardTitle className="text-muted-foreground text-sm font-normal">
           Total Spend
@@ -19,12 +19,12 @@ export function TotalSpendCard({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex items-baseline gap-3">
-          <span className="text-3xl font-semibold">₹{amount.toFixed(2)}</span>
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span className="text-2xl font-semibold">₹{amount.toFixed(2)}</span>
           {delta !== null ? (
             <span
               className={cn(
-                "text-sm font-medium",
+                "text-xs font-medium",
                 delta > 0 ? "text-status-critical" : "text-status-good"
               )}
             >
