@@ -1,8 +1,10 @@
 "use client"
 
+import { XIcon } from "lucide-react"
 import { useMemo, useState } from "react"
 
 import { GroupedTransactionList } from "@/components/transactions/grouped-transaction-list"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import type { AddedBy, Category, PaymentMode, Transaction } from "@/lib/types"
 
@@ -57,6 +59,12 @@ export function TransactionsExplorer({
 
   const hasActiveFilters = Boolean(query || dateFrom || dateTo)
 
+  const clearFilters = () => {
+    setQuery("")
+    setDateFrom("")
+    setDateTo("")
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -107,6 +115,18 @@ export function TransactionsExplorer({
             />
           </div>
         </div>
+        {hasActiveFilters ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={clearFilters}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <XIcon />
+            Clear filters
+          </Button>
+        ) : null}
       </div>
 
       <GroupedTransactionList

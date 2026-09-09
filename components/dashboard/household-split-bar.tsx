@@ -17,9 +17,11 @@ export function HouseholdSplitBar({
   const total = split.User1 + split.User2
 
   return (
-    <Card>
+    <Card size="sm">
       <CardHeader>
-        <CardTitle>Household Split</CardTitle>
+        <CardTitle className="text-muted-foreground text-sm font-normal">
+          Household Split
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {total === 0 ? (
@@ -41,14 +43,14 @@ export function HouseholdSplitBar({
                 )
               })}
             </div>
-            <div className="flex gap-6 text-sm">
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs">
               {SEGMENT_KEYS.map((seg) => (
                 <span key={seg.key} className="flex items-center gap-1.5">
                   <span
                     className="size-2.5 shrink-0 rounded-full"
                     style={{ backgroundColor: seg.color }}
                   />
-                  <span>{names[seg.key]}</span>
+                  <span className="font-medium">{names[seg.key]}</span>
                   <span className="text-muted-foreground">
                     ₹{split[seg.key].toFixed(2)} (
                     {((split[seg.key] / total) * 100).toFixed(0)}%)

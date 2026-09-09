@@ -47,34 +47,42 @@ export default async function Home() {
 
   return (
     <div className="flex flex-col gap-6">
-      <TotalSpendCard amount={spend} previousAmount={lastMonthSpend} />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <TotalSpendCard amount={spend} previousAmount={lastMonthSpend} />
+        <RecurringExpenseCard amount={recurring} previousAmount={lastMonthRecurring} />
+        <HouseholdSplitBar split={split} names={addedByNames} />
+      </div>
 
-      <RecurringExpenseCard amount={recurring} previousAmount={lastMonthRecurring} />
-
-      <HouseholdSplitBar split={split} names={addedByNames} />
-
-      <SpendBarChart transactions={transactions} categoriesById={categoriesById} range={range} />
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Recent transactions</CardTitle>
-          <Link
-            href="/transactions"
-            className="text-muted-foreground hover:text-foreground text-sm"
-          >
-            View all
-          </Link>
-        </CardHeader>
-        <CardContent>
-          <TransactionList
-            transactions={recent}
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-3">
+        <div className="xl:col-span-2">
+          <SpendBarChart
+            transactions={transactions}
             categoriesById={categoriesById}
-            categories={categories}
-            paymentModes={paymentModes}
-            addedByNames={addedByNames}
+            range={range}
           />
-        </CardContent>
-      </Card>
+        </div>
+
+        <Card className="xl:col-span-1">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Recent transactions</CardTitle>
+            <Link
+              href="/transactions"
+              className="text-muted-foreground hover:text-foreground text-sm"
+            >
+              View all
+            </Link>
+          </CardHeader>
+          <CardContent>
+            <TransactionList
+              transactions={recent}
+              categoriesById={categoriesById}
+              categories={categories}
+              paymentModes={paymentModes}
+              addedByNames={addedByNames}
+            />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

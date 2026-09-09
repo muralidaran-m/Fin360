@@ -17,7 +17,7 @@ export default async function AppLayout({
     <div className="flex min-h-svh flex-col md:flex-row">
       <AppSidebar />
 
-      <main className="mx-auto w-full max-w-2xl flex-1 p-4">{children}</main>
+      <main className="mx-auto w-full max-w-6xl flex-1 p-4 md:p-6">{children}</main>
 
       <QuickAddTransaction
         categories={categories}
