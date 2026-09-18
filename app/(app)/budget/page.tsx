@@ -6,6 +6,7 @@ import {
   budgetBreakdown,
   burnRate,
   categoryDrift,
+  getMonthlyReferenceDate,
   getTimeframeRange,
   type Timeframe,
 } from "@/lib/analytics"
@@ -31,10 +32,11 @@ export default async function BudgetPage({
   const categoriesById = new Map(categories.map((c) => [c.CategoryID, c]))
   const now = new Date()
   const range = getTimeframeRange(timeframe, now)
+  const monthlyReferenceDate = getMonthlyReferenceDate(timeframe, now)
 
   const breakdown = budgetBreakdown(transactions, categoriesById, range)
-  const burn = burnRate(transactions, now)
-  const drift = categoryDrift(transactions, categories, now)
+  const burn = burnRate(transactions, monthlyReferenceDate)
+  const drift = categoryDrift(transactions, categories, monthlyReferenceDate)
 
   return (
     <div className="flex flex-col gap-6">

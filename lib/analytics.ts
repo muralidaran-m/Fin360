@@ -42,6 +42,17 @@ export function getTimeframeRange(timeframe: Timeframe, now = new Date()): DateR
   return { start: toISODate(startOfMonth(now)), end: toISODate(endOfMonth(now)) }
 }
 
+/**
+ * Reference date for the monthly-shaped analyses (burn rate, category drift),
+ * which only make sense anchored to a single month. "last" anchors to the
+ * final day of the previous month so the whole month reads as elapsed/actual
+ * rather than just its first day; "current" and "ytd" both anchor to today.
+ */
+export function getMonthlyReferenceDate(timeframe: Timeframe, now = new Date()): Date {
+  if (timeframe === "last") return endOfMonth(addMonths(now, -1))
+  return now
+}
+
 export function filterByRange(transactions: Transaction[], range: DateRange): Transaction[] {
   return transactions.filter((t) => {
     const effective = getEffectiveDate(t)
