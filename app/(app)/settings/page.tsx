@@ -1,19 +1,22 @@
 import { AddCategoryButton } from "@/app/(app)/settings/add-category-button"
+import { AddEventButton } from "@/app/(app)/settings/add-event-button"
 import { AddPaymentModeButton } from "@/app/(app)/settings/add-payment-mode-button"
 import { EditCategoryButton } from "@/app/(app)/settings/edit-category-button"
+import { EditEventButton } from "@/app/(app)/settings/edit-event-button"
 import { EditPaymentModeButton } from "@/app/(app)/settings/edit-payment-mode-button"
 import { HouseholdSettingsForm } from "@/components/household-settings-form"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getAddedByNames, getCategories, getPaymentModes } from "@/lib/data"
+import { getAddedByNames, getCategories, getEvents, getPaymentModes } from "@/lib/data"
 import { getCategoryIcon } from "@/lib/icons"
 
 export const dynamic = "force-dynamic"
 
 export default async function SettingsPage() {
-  const [categories, paymentModes, addedByNames] = await Promise.all([
+  const [categories, paymentModes, events, addedByNames] = await Promise.all([
     getCategories(),
     getPaymentModes(),
+    getEvents(),
     getAddedByNames(),
   ])
 
@@ -86,6 +89,33 @@ export default async function SettingsPage() {
                 >
                   <span className="flex-1 font-medium">{paymentMode.Name}</span>
                   <EditPaymentModeButton paymentMode={paymentMode} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Events</CardTitle>
+          <AddEventButton />
+        </CardHeader>
+        <CardContent>
+          {events.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              No events yet. Create one for a trip, festival, or family function to
+              tag transactions with it.
+            </p>
+          ) : (
+            <ul className="divide-y">
+              {events.map((event) => (
+                <li
+                  key={event.EventID}
+                  className="flex items-center py-3 first:pt-0 last:pb-0"
+                >
+                  <span className="flex-1 font-medium">{event.Name}</span>
+                  <EditEventButton event={event} />
                 </li>
               ))}
             </ul>

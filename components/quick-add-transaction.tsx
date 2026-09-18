@@ -11,20 +11,23 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import type { AddedBy, Category, PaymentMode } from "@/lib/types"
+import type { AddedBy, Category, Event, PaymentMode } from "@/lib/types"
 
 export function QuickAddTransaction({
   categories: initialCategories,
   paymentModes: initialPaymentModes,
+  events: initialEvents,
   addedByNames,
 }: {
   categories: Category[]
   paymentModes: PaymentMode[]
+  events: Event[]
   addedByNames: Record<AddedBy, string>
 }) {
   const [open, setOpen] = useState(false)
   const [categories, setCategories] = useState(initialCategories)
   const [paymentModes, setPaymentModes] = useState(initialPaymentModes)
+  const [events, setEvents] = useState(initialEvents)
 
   // AppLayout doesn't remount on navigation, so when Settings triggers a
   // router.refresh(), these props change without this component ever
@@ -41,6 +44,12 @@ export function QuickAddTransaction({
   if (initialPaymentModes !== prevInitialPaymentModes) {
     setPrevInitialPaymentModes(initialPaymentModes)
     setPaymentModes(initialPaymentModes)
+  }
+
+  const [prevInitialEvents, setPrevInitialEvents] = useState(initialEvents)
+  if (initialEvents !== prevInitialEvents) {
+    setPrevInitialEvents(initialEvents)
+    setEvents(initialEvents)
   }
 
   return (
@@ -66,6 +75,7 @@ export function QuickAddTransaction({
             <TransactionForm
               categories={categories}
               paymentModes={paymentModes}
+              events={events}
               addedByNames={addedByNames}
               onCategoryCreated={(category) =>
                 setCategories((prev) => [...prev, category])
@@ -73,6 +83,7 @@ export function QuickAddTransaction({
               onPaymentModeCreated={(paymentMode) =>
                 setPaymentModes((prev) => [...prev, paymentMode])
               }
+              onEventCreated={(event) => setEvents((prev) => [...prev, event])}
               onSuccess={() => setOpen(false)}
             />
           </div>

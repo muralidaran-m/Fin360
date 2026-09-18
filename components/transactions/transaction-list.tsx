@@ -6,7 +6,7 @@ import { TransactionForm } from "@/components/transaction-form"
 import { Badge } from "@/components/ui/badge"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { CategoryIcon } from "@/lib/icons"
-import type { AddedBy, Category, PaymentMode, Transaction } from "@/lib/types"
+import type { AddedBy, Category, Event, PaymentMode, Transaction } from "@/lib/types"
 
 export function TransactionRow({
   transaction: tx,
@@ -14,16 +14,19 @@ export function TransactionRow({
   addedByNames,
   categories,
   paymentModes,
+  events,
 }: {
   transaction: Transaction
   category: Category | undefined
   addedByNames: Record<AddedBy, string>
   categories: Category[]
   paymentModes: PaymentMode[]
+  events: Event[]
 }) {
   const [open, setOpen] = useState(false)
   const [localCategories, setLocalCategories] = useState(categories)
   const [localPaymentModes, setLocalPaymentModes] = useState(paymentModes)
+  const [localEvents, setLocalEvents] = useState(events)
 
   return (
     <>
@@ -48,6 +51,11 @@ export function TransactionRow({
               {tx.IsRecurring ? (
                 <Badge variant="secondary" className="text-xs">
                   Recurring
+                </Badge>
+              ) : null}
+              {tx.EventName ? (
+                <Badge variant="outline" className="text-xs">
+                  {tx.EventName}
                 </Badge>
               ) : null}
             </div>
@@ -80,6 +88,7 @@ export function TransactionRow({
               transaction={tx}
               categories={localCategories}
               paymentModes={localPaymentModes}
+              events={localEvents}
               addedByNames={addedByNames}
               onCategoryCreated={(category) =>
                 setLocalCategories((prev) => [...prev, category])
@@ -87,6 +96,7 @@ export function TransactionRow({
               onPaymentModeCreated={(paymentMode) =>
                 setLocalPaymentModes((prev) => [...prev, paymentMode])
               }
+              onEventCreated={(event) => setLocalEvents((prev) => [...prev, event])}
               onSuccess={() => setOpen(false)}
             />
           </div>
@@ -101,6 +111,7 @@ export function TransactionList({
   categoriesById,
   categories,
   paymentModes,
+  events,
   addedByNames,
   emptyMessage = "No transactions yet. Tap the + button to add one.",
 }: {
@@ -108,6 +119,7 @@ export function TransactionList({
   categoriesById: Map<string, Category>
   categories: Category[]
   paymentModes: PaymentMode[]
+  events: Event[]
   addedByNames: Record<AddedBy, string>
   emptyMessage?: string
 }) {
@@ -125,6 +137,7 @@ export function TransactionList({
           addedByNames={addedByNames}
           categories={categories}
           paymentModes={paymentModes}
+          events={events}
         />
       ))}
     </ul>

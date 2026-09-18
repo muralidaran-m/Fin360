@@ -1,15 +1,16 @@
 import { AppSidebar } from "@/components/app-sidebar"
 import { QuickAddTransaction } from "@/components/quick-add-transaction"
-import { getAddedByNames, getCategories, getPaymentModes } from "@/lib/data"
+import { getAddedByNames, getCategories, getEvents, getPaymentModes } from "@/lib/data"
 
 export default async function AppLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const [categories, paymentModes, addedByNames] = await Promise.all([
+  const [categories, paymentModes, events, addedByNames] = await Promise.all([
     getCategories(),
     getPaymentModes(),
+    getEvents(),
     getAddedByNames(),
   ])
 
@@ -22,6 +23,7 @@ export default async function AppLayout({
       <QuickAddTransaction
         categories={categories}
         paymentModes={paymentModes}
+        events={events}
         addedByNames={addedByNames}
       />
     </div>

@@ -10,6 +10,7 @@ import {
   SHEET_NAMES,
   type AddedBy,
   type Category,
+  type Event,
   type PaymentMode,
   type SandboxPlan,
   type Setting,
@@ -19,6 +20,7 @@ import {
 const TAGS = {
   categories: "categories",
   paymentModes: "payment_modes",
+  events: "events",
   transactions: "transactions",
   sandboxPlans: "sandbox_plans",
   settings: "settings",
@@ -60,6 +62,12 @@ export const getPaymentModes = cache(
   async (): Promise<PaymentMode[]> => getRows<PaymentMode>(SHEET_NAMES.PaymentModes),
   ["payment_modes"],
   { tags: [TAGS.paymentModes] }
+)
+
+export const getEvents = cache(
+  async (): Promise<Event[]> => getRows<Event>(SHEET_NAMES.Events),
+  ["events"],
+  { tags: [TAGS.events] }
 )
 
 export const getSandboxPlans = cache(
@@ -129,6 +137,21 @@ export async function updatePaymentMode(
 ): Promise<void> {
   await updateRow(SHEET_NAMES.PaymentModes, "PaymentModeID", paymentModeId, input)
   updateTag(TAGS.paymentModes)
+}
+
+export async function addEvent(input: Omit<Event, "EventID">): Promise<Event> {
+  const event: Event = { ...input, EventID: uuid() }
+  await appendRow(SHEET_NAMES.Events, event)
+  updateTag(TAGS.events)
+  return event
+}
+
+export async function updateEvent(
+  eventId: string,
+  input: Omit<Event, "EventID">
+): Promise<void> {
+  await updateRow(SHEET_NAMES.Events, "EventID", eventId, input)
+  updateTag(TAGS.events)
 }
 
 export async function addTransaction(

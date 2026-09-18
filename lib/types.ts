@@ -13,6 +13,11 @@ export type PaymentMode = {
   Name: string
 }
 
+export type Event = {
+  EventID: string
+  Name: string
+}
+
 export type TransactionType = "Expense" | "Income"
 
 export type AddedBy = "User1" | "User2"
@@ -29,6 +34,8 @@ export type Transaction = {
   IsRecurring: boolean
   PaymentModeID: string
   PaymentModeName: string
+  EventID: string
+  EventName: string
 }
 
 export type Setting = {
@@ -58,6 +65,7 @@ export type SandboxPlan = {
 export const SHEET_NAMES = {
   Categories: "Categories",
   PaymentModes: "Payment_Modes",
+  Events: "Events",
   Transactions: "Transactions",
   SandboxPlans: "Sandbox_Plans",
   Settings: "Settings",
@@ -68,6 +76,7 @@ export type SheetName = (typeof SHEET_NAMES)[keyof typeof SHEET_NAMES]
 export const SHEET_HEADERS: Record<SheetName, string[]> = {
   Categories: ["CategoryID", "Name", "Type", "Icon", "ColorHex"],
   Payment_Modes: ["PaymentModeID", "Name"],
+  Events: ["EventID", "Name"],
   Transactions: [
     "TxID",
     "Date",
@@ -80,6 +89,8 @@ export const SHEET_HEADERS: Record<SheetName, string[]> = {
     "IsRecurring",
     "PaymentModeID",
     "PaymentModeName",
+    "EventID",
+    "EventName",
   ],
   Sandbox_Plans: [
     "PlanID",

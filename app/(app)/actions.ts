@@ -2,22 +2,25 @@
 
 import {
   addCategory,
+  addEvent,
   addPaymentMode,
   addSandboxPlan,
   addTransaction,
   updateAddedByNames,
   updateCategory,
+  updateEvent,
   updatePaymentMode,
   updateTransaction,
 } from "@/lib/data"
 import {
   categorySchema,
+  eventSchema,
   householdSettingsSchema,
   paymentModeSchema,
   sandboxPlanSchema,
   transactionSchema,
 } from "@/lib/validation"
-import type { Category, PaymentMode, SandboxPlan } from "@/lib/types"
+import type { Category, Event, PaymentMode, SandboxPlan } from "@/lib/types"
 
 export type ActionState = { error?: string }
 
@@ -92,6 +95,37 @@ export async function updatePaymentModeAction(
   return {}
 }
 
+export type EventActionState = { error?: string; event?: Event }
+
+export async function createEventAction(formData: FormData): Promise<EventActionState> {
+  const parsed = eventSchema.safeParse({
+    Name: formData.get("Name"),
+  })
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid event" }
+  }
+
+  const event = await addEvent(parsed.data)
+  return { event }
+}
+
+export async function updateEventAction(
+  eventId: string,
+  formData: FormData
+): Promise<ActionState> {
+  const parsed = eventSchema.safeParse({
+    Name: formData.get("Name"),
+  })
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid event" }
+  }
+
+  await updateEvent(eventId, parsed.data)
+  return {}
+}
+
 export async function updateHouseholdSettingsAction(
   formData: FormData
 ): Promise<ActionState> {
@@ -119,12 +153,25 @@ export type CreateTransactionInput = {
   IsRecurring: boolean
   AddedBy: "User1" | "User2"
   PaymentModeID: string
+  EventID: string
+}
+
+function resolveEvent(
+  eventId: string,
+  event: Pick<Event, "EventID" | "Name"> | null | undefined
+): { error?: string; EventID: string; EventName: string } {
+  if (!eventId) return { EventID: "", EventName: "" }
+  if (!event || event.EventID !== eventId) {
+    return { error: "Event mismatch", EventID: "", EventName: "" }
+  }
+  return { EventID: event.EventID, EventName: event.Name }
 }
 
 export async function createTransactionAction(
   input: CreateTransactionInput,
   category: Pick<Category, "CategoryID" | "Name" | "Type">,
-  paymentMode: Pick<PaymentMode, "PaymentModeID" | "Name">
+  paymentMode: Pick<PaymentMode, "PaymentModeID" | "Name">,
+  event?: Pick<Event, "EventID" | "Name"> | null
 ): Promise<ActionState> {
   const parsed = transactionSchema.safeParse(input)
 
@@ -138,6 +185,11 @@ export async function createTransactionAction(
 
   if (paymentMode.PaymentModeID !== parsed.data.PaymentModeID) {
     return { error: "Payment mode mismatch" }
+  }
+
+  const resolvedEvent = resolveEvent(parsed.data.EventID, event)
+  if (resolvedEvent.error) {
+    return { error: resolvedEvent.error }
   }
 
   await addTransaction({
@@ -151,6 +203,8 @@ export async function createTransactionAction(
     IsRecurring: parsed.data.IsRecurring,
     PaymentModeID: parsed.data.PaymentModeID,
     PaymentModeName: paymentMode.Name,
+    EventID: resolvedEvent.EventID,
+    EventName: resolvedEvent.EventName,
   })
 
   return {}
@@ -160,7 +214,8 @@ export async function updateTransactionAction(
   txId: string,
   input: CreateTransactionInput,
   category: Pick<Category, "CategoryID" | "Name" | "Type">,
-  paymentMode: Pick<PaymentMode, "PaymentModeID" | "Name">
+  paymentMode: Pick<PaymentMode, "PaymentModeID" | "Name">,
+  event?: Pick<Event, "EventID" | "Name"> | null
 ): Promise<ActionState> {
   const parsed = transactionSchema.safeParse(input)
 
@@ -176,6 +231,11 @@ export async function updateTransactionAction(
     return { error: "Payment mode mismatch" }
   }
 
+  const resolvedEvent = resolveEvent(parsed.data.EventID, event)
+  if (resolvedEvent.error) {
+    return { error: resolvedEvent.error }
+  }
+
   await updateTransaction(txId, {
     Date: parsed.data.Date,
     Amount: parsed.data.Amount,
@@ -187,6 +247,8 @@ export async function updateTransactionAction(
     IsRecurring: parsed.data.IsRecurring,
     PaymentModeID: parsed.data.PaymentModeID,
     PaymentModeName: paymentMode.Name,
+    EventID: resolvedEvent.EventID,
+    EventName: resolvedEvent.EventName,
   })
 
   return {}
