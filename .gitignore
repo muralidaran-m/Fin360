@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local data (raw statement exports, generated import plans)
+/data/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
