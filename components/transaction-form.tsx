@@ -3,7 +3,7 @@
 import { useEffect, useTransition } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 
 import { createTransactionAction, updateTransactionAction } from "@/app/(app)/actions"
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
+import { computeBillDate } from "@/lib/credit-card"
 import type { AddedBy, Category, Event, PaymentMode, Transaction } from "@/lib/types"
 import { transactionSchema, type TransactionFormValues } from "@/lib/validation"
 
@@ -68,6 +69,7 @@ export function TransactionForm({
           AddedBy: transaction.AddedBy,
           PaymentModeID: transaction.PaymentModeID,
           EventID: transaction.EventID,
+          BillDate: transaction.BillDate,
         }
       : {
           Amount: 0,
@@ -78,8 +80,25 @@ export function TransactionForm({
           AddedBy: "User1",
           PaymentModeID: "",
           EventID: "",
+          BillDate: "",
         },
   })
+
+  const paymentModeId = useWatch({ control: form.control, name: "PaymentModeID" })
+  const date = useWatch({ control: form.control, name: "Date" })
+  const selectedPaymentMode = paymentModes.find((p) => p.PaymentModeID === paymentModeId)
+
+  useEffect(() => {
+    if (selectedPaymentMode?.Kind === "CreditCard" && selectedPaymentMode.StatementDay && selectedPaymentMode.DueDays) {
+      form.setValue("BillDate", computeBillDate(date, selectedPaymentMode))
+    } else {
+      form.setValue("BillDate", "")
+    }
+    // Deliberately excludes selectedPaymentMode/form and BillDate's own value:
+    // re-suggest only when the purchase date or the payment mode changes, so a
+    // manual edit to BillDate itself isn't clobbered on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentModeId, date])
 
   useEffect(() => {
     if (isEditing) return
@@ -133,6 +152,7 @@ export function TransactionForm({
           AddedBy: values.AddedBy,
           PaymentModeID: "",
           EventID: "",
+          BillDate: "",
         })
       }
       router.refresh()
@@ -240,6 +260,27 @@ export function TransactionForm({
             </FormItem>
           )}
         />
+
+        {selectedPaymentMode?.Kind === "CreditCard" ? (
+          <FormField
+            control={form.control}
+            name="BillDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Bill date</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <p className="text-muted-foreground text-xs">
+                  Auto-suggested from this card&apos;s billing cycle — counts toward
+                  that month&apos;s totals instead of the purchase month. Edit if
+                  needed.
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ) : null}
 
         <FormField
           control={form.control}

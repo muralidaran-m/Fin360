@@ -89,7 +89,15 @@ export default async function SettingsPage() {
                 key={paymentMode.PaymentModeID}
                 className="flex items-center py-3 first:pt-0 last:pb-0"
               >
-                <span className="flex-1 font-medium">{paymentMode.Name}</span>
+                <span className="flex-1">
+                  <span className="font-medium">{paymentMode.Name}</span>
+                  {paymentMode.Kind === "CreditCard" ? (
+                    <span className="text-muted-foreground block text-xs">
+                      Credit card · statement day {paymentMode.StatementDay}, due{" "}
+                      {paymentMode.DueDays} days later
+                    </span>
+                  ) : null}
+                </span>
                 <EditPaymentModeButton paymentMode={paymentMode} />
                 <DeleteConfirmButton
                   id={paymentMode.PaymentModeID}

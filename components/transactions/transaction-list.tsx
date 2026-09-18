@@ -7,8 +7,14 @@ import { DeleteConfirmButton } from "@/components/delete-confirm-button"
 import { TransactionForm } from "@/components/transaction-form"
 import { Badge } from "@/components/ui/badge"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { getEffectiveDate, parseIsoDate } from "@/lib/credit-card"
 import { CategoryIcon } from "@/lib/icons"
 import type { AddedBy, Category, Event, PaymentMode, Transaction } from "@/lib/types"
+
+const BILL_MONTH_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  year: "numeric",
+})
 
 export function TransactionRow({
   transaction: tx,
@@ -29,6 +35,10 @@ export function TransactionRow({
   const [localCategories, setLocalCategories] = useState(categories)
   const [localPaymentModes, setLocalPaymentModes] = useState(paymentModes)
   const [localEvents, setLocalEvents] = useState(events)
+
+  const effectiveDate = getEffectiveDate(tx)
+  const billedInDifferentMonth =
+    tx.BillDate !== "" && effectiveDate.slice(0, 7) !== tx.Date.slice(0, 7)
 
   return (
     <>
@@ -58,6 +68,11 @@ export function TransactionRow({
               {tx.EventName ? (
                 <Badge variant="outline" className="text-xs">
                   {tx.EventName}
+                </Badge>
+              ) : null}
+              {billedInDifferentMonth ? (
+                <Badge variant="outline" className="text-xs">
+                  Billed {BILL_MONTH_FORMATTER.format(parseIsoDate(effectiveDate))}
                 </Badge>
               ) : null}
             </div>

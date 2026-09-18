@@ -8,9 +8,14 @@ export type Category = {
   ColorHex: string
 }
 
+export type PaymentModeKind = "Ordinary" | "CreditCard"
+
 export type PaymentMode = {
   PaymentModeID: string
   Name: string
+  Kind: PaymentModeKind
+  StatementDay: number
+  DueDays: number
 }
 
 export type Event = {
@@ -36,6 +41,7 @@ export type Transaction = {
   PaymentModeName: string
   EventID: string
   EventName: string
+  BillDate: string
 }
 
 export type Setting = {
@@ -75,7 +81,7 @@ export type SheetName = (typeof SHEET_NAMES)[keyof typeof SHEET_NAMES]
 
 export const SHEET_HEADERS: Record<SheetName, string[]> = {
   Categories: ["CategoryID", "Name", "Type", "Icon", "ColorHex"],
-  Payment_Modes: ["PaymentModeID", "Name"],
+  Payment_Modes: ["PaymentModeID", "Name", "Kind", "StatementDay", "DueDays"],
   Events: ["EventID", "Name"],
   Transactions: [
     "TxID",
@@ -91,6 +97,7 @@ export const SHEET_HEADERS: Record<SheetName, string[]> = {
     "PaymentModeName",
     "EventID",
     "EventName",
+    "BillDate",
   ],
   Sandbox_Plans: [
     "PlanID",

@@ -13,9 +13,32 @@ export const categorySchema = z.object({
 
 export type CategoryFormValues = z.infer<typeof categorySchema>
 
-export const paymentModeSchema = z.object({
-  Name: z.string().trim().min(1, "Name is required").max(40),
-})
+export const PAYMENT_MODE_KINDS = ["Ordinary", "CreditCard"] as const
+
+export const paymentModeSchema = z
+  .object({
+    Name: z.string().trim().min(1, "Name is required").max(40),
+    Kind: z.enum(PAYMENT_MODE_KINDS),
+    StatementDay: z.coerce.number().int().min(0).max(31),
+    DueDays: z.coerce.number().int().min(0).max(60),
+  })
+  .superRefine((data, ctx) => {
+    if (data.Kind !== "CreditCard") return
+    if (data.StatementDay < 1) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["StatementDay"],
+        message: "Statement day is required for credit cards",
+      })
+    }
+    if (data.DueDays < 1) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["DueDays"],
+        message: "Due days is required for credit cards",
+      })
+    }
+  })
 
 export type PaymentModeFormValues = z.infer<typeof paymentModeSchema>
 
@@ -36,6 +59,9 @@ export const transactionSchema = z.object({
   AddedBy: z.enum(["User1", "User2"]),
   PaymentModeID: z.string().min(1, "Payment mode is required"),
   EventID: z.string(),
+  BillDate: z
+    .string()
+    .refine((v) => v === "" || /^\d{4}-\d{2}-\d{2}$/.test(v), "Invalid bill date"),
 })
 
 export type TransactionFormValues = z.infer<typeof transactionSchema>
