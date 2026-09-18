@@ -66,7 +66,10 @@ function parseSandboxPlan(raw: Record<string, unknown>): SandboxPlan {
 }
 
 export const getCategories = cache(
-  async (): Promise<Category[]> => getRows<Category>(SHEET_NAMES.Categories),
+  async (): Promise<Category[]> => {
+    const categories = await getRows<Category>(SHEET_NAMES.Categories)
+    return categories.sort((a, b) => a.Name.localeCompare(b.Name))
+  },
   ["categories"],
   { tags: [TAGS.categories] }
 )
