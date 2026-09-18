@@ -24,6 +24,7 @@ import {
   sandboxPlanSchema,
   transactionSchema,
 } from "@/lib/validation"
+import { computeBillDate } from "@/lib/credit-card"
 import type { Category, Event, PaymentMode, SandboxPlan } from "@/lib/types"
 
 export type ActionState = { error?: string }
@@ -81,12 +82,19 @@ export async function deleteCategoryAction(categoryId: string): Promise<ActionSt
 
 export type PaymentModeActionState = { error?: string; paymentMode?: PaymentMode }
 
+function parsePaymentModeFormData(formData: FormData) {
+  return paymentModeSchema.safeParse({
+    Name: formData.get("Name"),
+    Kind: formData.get("Kind") || "Ordinary",
+    StatementDay: formData.get("StatementDay") ?? "",
+    DueDays: formData.get("DueDays") ?? "",
+  })
+}
+
 export async function createPaymentModeAction(
   formData: FormData
 ): Promise<PaymentModeActionState> {
-  const parsed = paymentModeSchema.safeParse({
-    Name: formData.get("Name"),
-  })
+  const parsed = parsePaymentModeFormData(formData)
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid payment mode" }
@@ -100,9 +108,7 @@ export async function updatePaymentModeAction(
   paymentModeId: string,
   formData: FormData
 ): Promise<ActionState> {
-  const parsed = paymentModeSchema.safeParse({
-    Name: formData.get("Name"),
-  })
+  const parsed = parsePaymentModeFormData(formData)
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid payment mode" }
@@ -179,6 +185,7 @@ export type CreateTransactionInput = {
   AddedBy: "User1" | "User2"
   PaymentModeID: string
   EventID: string
+  BillDate: string
 }
 
 function resolveEvent(
@@ -192,10 +199,23 @@ function resolveEvent(
   return { EventID: event.EventID, EventName: event.Name }
 }
 
+function resolveBillDate(
+  date: string,
+  billDateInput: string,
+  paymentMode: Pick<PaymentMode, "Kind" | "StatementDay" | "DueDays">
+): string {
+  if (paymentMode.Kind !== "CreditCard") return ""
+  if (billDateInput) return billDateInput
+  if (paymentMode.StatementDay && paymentMode.DueDays) {
+    return computeBillDate(date, paymentMode)
+  }
+  return ""
+}
+
 export async function createTransactionAction(
   input: CreateTransactionInput,
   category: Pick<Category, "CategoryID" | "Name" | "Type">,
-  paymentMode: Pick<PaymentMode, "PaymentModeID" | "Name">,
+  paymentMode: Pick<PaymentMode, "PaymentModeID" | "Name" | "Kind" | "StatementDay" | "DueDays">,
   event?: Pick<Event, "EventID" | "Name"> | null
 ): Promise<ActionState> {
   const parsed = transactionSchema.safeParse(input)
@@ -230,6 +250,7 @@ export async function createTransactionAction(
     PaymentModeName: paymentMode.Name,
     EventID: resolvedEvent.EventID,
     EventName: resolvedEvent.EventName,
+    BillDate: resolveBillDate(parsed.data.Date, parsed.data.BillDate, paymentMode),
   })
 
   return {}
@@ -239,7 +260,7 @@ export async function updateTransactionAction(
   txId: string,
   input: CreateTransactionInput,
   category: Pick<Category, "CategoryID" | "Name" | "Type">,
-  paymentMode: Pick<PaymentMode, "PaymentModeID" | "Name">,
+  paymentMode: Pick<PaymentMode, "PaymentModeID" | "Name" | "Kind" | "StatementDay" | "DueDays">,
   event?: Pick<Event, "EventID" | "Name"> | null
 ): Promise<ActionState> {
   const parsed = transactionSchema.safeParse(input)
@@ -274,6 +295,7 @@ export async function updateTransactionAction(
     PaymentModeName: paymentMode.Name,
     EventID: resolvedEvent.EventID,
     EventName: resolvedEvent.EventName,
+    BillDate: resolveBillDate(parsed.data.Date, parsed.data.BillDate, paymentMode),
   })
 
   return {}

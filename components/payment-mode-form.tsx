@@ -2,7 +2,7 @@
 
 import { useTransition } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 
 import { createPaymentModeAction, updatePaymentModeAction } from "@/app/(app)/actions"
 import { Button } from "@/components/ui/button"
@@ -15,8 +15,17 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import type { PaymentMode } from "@/lib/types"
-import { paymentModeSchema, type PaymentModeFormValues } from "@/lib/validation"
+import type { PaymentMode, PaymentModeKind } from "@/lib/types"
+import {
+  PAYMENT_MODE_KINDS,
+  paymentModeSchema,
+  type PaymentModeFormValues,
+} from "@/lib/validation"
+
+const KIND_LABELS: Record<PaymentModeKind, string> = {
+  Ordinary: "Cash / Bank / UPI",
+  CreditCard: "Credit Card",
+}
 
 export function PaymentModeForm({
   paymentMode,
@@ -28,13 +37,23 @@ export function PaymentModeForm({
   const [pending, startTransition] = useTransition()
   const form = useForm<PaymentModeFormValues>({
     resolver: zodResolver(paymentModeSchema),
-    defaultValues: { Name: paymentMode?.Name ?? "" },
+    defaultValues: {
+      Name: paymentMode?.Name ?? "",
+      Kind: paymentMode?.Kind ?? "Ordinary",
+      StatementDay: paymentMode?.StatementDay ?? 0,
+      DueDays: paymentMode?.DueDays ?? 0,
+    },
   })
+
+  const kind = useWatch({ control: form.control, name: "Kind" })
 
   function onSubmit(values: PaymentModeFormValues) {
     startTransition(async () => {
       const formData = new FormData()
       formData.set("Name", values.Name)
+      formData.set("Kind", values.Kind)
+      formData.set("StatementDay", String(values.StatementDay))
+      formData.set("DueDays", String(values.DueDays))
 
       if (paymentMode) {
         const result = await updatePaymentModeAction(paymentMode.PaymentModeID, formData)
@@ -83,6 +102,80 @@ export function PaymentModeForm({
             </FormItem>
           )}
         />
+
+        <FormField
+          control={form.control}
+          name="Kind"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Type</FormLabel>
+              <div className="grid grid-cols-2 gap-2">
+                {PAYMENT_MODE_KINDS.map((value) => (
+                  <Button
+                    key={value}
+                    type="button"
+                    variant={field.value === value ? "default" : "outline"}
+                    onClick={() => field.onChange(value)}
+                  >
+                    {KIND_LABELS[value]}
+                  </Button>
+                ))}
+              </div>
+            </FormItem>
+          )}
+        />
+
+        {kind === "CreditCard" ? (
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="StatementDay"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Statement day</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      min="1"
+                      max="31"
+                      {...field}
+                      value={field.value || ""}
+                      onChange={(e) =>
+                        field.onChange(e.target.value === "" ? 0 : e.target.valueAsNumber)
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="DueDays"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Due (days after statement)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      min="1"
+                      max="60"
+                      {...field}
+                      value={field.value || ""}
+                      onChange={(e) =>
+                        field.onChange(e.target.value === "" ? 0 : e.target.valueAsNumber)
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        ) : null}
 
         {form.formState.errors.root ? (
           <p className="text-destructive text-sm">

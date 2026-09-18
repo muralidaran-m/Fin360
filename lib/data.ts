@@ -34,6 +34,28 @@ function parseTransaction(raw: Record<string, unknown>): Transaction {
   } as Transaction
 }
 
+function parsePaymentMode(raw: Record<string, unknown>): PaymentMode {
+  const kind = raw.Kind === "CreditCard" ? "CreditCard" : "Ordinary"
+  return {
+    ...raw,
+    Kind: kind,
+    StatementDay: Number(raw.StatementDay) || 0,
+    DueDays: Number(raw.DueDays) || 0,
+  } as PaymentMode
+}
+
+function toPaymentModeWrite(
+  input: Omit<PaymentMode, "PaymentModeID">
+): Omit<PaymentMode, "PaymentModeID"> {
+  const isCreditCard = input.Kind === "CreditCard"
+  return {
+    Name: input.Name,
+    Kind: input.Kind,
+    StatementDay: isCreditCard ? input.StatementDay : 0,
+    DueDays: isCreditCard ? input.DueDays : 0,
+  }
+}
+
 function parseSandboxPlan(raw: Record<string, unknown>): SandboxPlan {
   return {
     ...raw,
@@ -44,7 +66,10 @@ function parseSandboxPlan(raw: Record<string, unknown>): SandboxPlan {
 }
 
 export const getCategories = cache(
-  async (): Promise<Category[]> => getRows<Category>(SHEET_NAMES.Categories),
+  async (): Promise<Category[]> => {
+    const categories = await getRows<Category>(SHEET_NAMES.Categories)
+    return categories.sort((a, b) => a.Name.localeCompare(b.Name))
+  },
   ["categories"],
   { tags: [TAGS.categories] }
 )
@@ -59,7 +84,10 @@ export const getTransactions = cache(
 )
 
 export const getPaymentModes = cache(
-  async (): Promise<PaymentMode[]> => getRows<PaymentMode>(SHEET_NAMES.PaymentModes),
+  async (): Promise<PaymentMode[]> => {
+    const rows = await getRows<Record<string, unknown>>(SHEET_NAMES.PaymentModes)
+    return rows.map(parsePaymentMode)
+  },
   ["payment_modes"],
   { tags: [TAGS.paymentModes] }
 )
@@ -138,7 +166,8 @@ export async function deleteCategory(categoryId: string): Promise<void> {
 export async function addPaymentMode(
   input: Omit<PaymentMode, "PaymentModeID">
 ): Promise<PaymentMode> {
-  const paymentMode: PaymentMode = { ...input, PaymentModeID: uuid() }
+  const normalized = toPaymentModeWrite(input)
+  const paymentMode: PaymentMode = { ...normalized, PaymentModeID: uuid() }
   await appendRow(SHEET_NAMES.PaymentModes, paymentMode)
   updateTag(TAGS.paymentModes)
   return paymentMode
@@ -148,7 +177,7 @@ export async function updatePaymentMode(
   paymentModeId: string,
   input: Omit<PaymentMode, "PaymentModeID">
 ): Promise<void> {
-  await updateRow(SHEET_NAMES.PaymentModes, "PaymentModeID", paymentModeId, input)
+  await updateRow(SHEET_NAMES.PaymentModes, "PaymentModeID", paymentModeId, toPaymentModeWrite(input))
   updateTag(TAGS.paymentModes)
 }
 

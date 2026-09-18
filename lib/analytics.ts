@@ -1,3 +1,4 @@
+import { getEffectiveDate } from "@/lib/credit-card"
 import type { AddedBy, Category, CategoryType, Transaction } from "@/lib/types"
 
 export type Timeframe = "current" | "last" | "ytd"
@@ -42,7 +43,10 @@ export function getTimeframeRange(timeframe: Timeframe, now = new Date()): DateR
 }
 
 export function filterByRange(transactions: Transaction[], range: DateRange): Transaction[] {
-  return transactions.filter((t) => t.Date >= range.start && t.Date <= range.end)
+  return transactions.filter((t) => {
+    const effective = getEffectiveDate(t)
+    return effective >= range.start && effective <= range.end
+  })
 }
 
 /** Sum of IsRecurring expense transactions for the current month. */
@@ -136,7 +140,7 @@ export function burnRate(transactions: Transaction[], now = new Date()): BurnRat
   const dailyTotals = new Array(daysInMonth).fill(0)
   for (const t of filterByRange(transactions, range)) {
     if (t.Type !== "Expense") continue
-    const day = Number(t.Date.slice(8, 10))
+    const day = Number(getEffectiveDate(t).slice(8, 10))
     dailyTotals[day - 1] += t.Amount
   }
 
