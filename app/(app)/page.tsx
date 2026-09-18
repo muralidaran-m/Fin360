@@ -13,7 +13,13 @@ import {
   totalRecurringExpense,
   totalSpend,
 } from "@/lib/analytics"
-import { getAddedByNames, getCategories, getPaymentModes, getTransactions } from "@/lib/data"
+import {
+  getAddedByNames,
+  getCategories,
+  getEvents,
+  getPaymentModes,
+  getTransactions,
+} from "@/lib/data"
 import { sortTransactionsByRecency } from "@/lib/transaction-groups"
 
 const RECENT_TRANSACTIONS_PREVIEW_COUNT = 5
@@ -21,9 +27,10 @@ const RECENT_TRANSACTIONS_PREVIEW_COUNT = 5
 export const dynamic = "force-dynamic"
 
 export default async function Home() {
-  const [categories, paymentModes, transactions, addedByNames] = await Promise.all([
+  const [categories, paymentModes, events, transactions, addedByNames] = await Promise.all([
     getCategories(),
     getPaymentModes(),
+    getEvents(),
     getTransactions(),
     getAddedByNames(),
   ])
@@ -78,6 +85,7 @@ export default async function Home() {
               categoriesById={categoriesById}
               categories={categories}
               paymentModes={paymentModes}
+              events={events}
               addedByNames={addedByNames}
             />
           </CardContent>

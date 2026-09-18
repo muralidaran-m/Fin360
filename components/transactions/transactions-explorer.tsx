@@ -6,7 +6,14 @@ import { useMemo, useState } from "react"
 import { GroupedTransactionList } from "@/components/transactions/grouped-transaction-list"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import type { AddedBy, Category, PaymentMode, Transaction } from "@/lib/types"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import type { AddedBy, Category, Event, PaymentMode, Transaction } from "@/lib/types"
 
 function matchesQuery(
   tx: Transaction,
@@ -28,20 +35,25 @@ function matchesQuery(
   return haystack.includes(normalizedQuery)
 }
 
+const ALL_EVENTS_VALUE = "__all__"
+
 export function TransactionsExplorer({
   transactions,
   categories,
   paymentModes,
+  events,
   addedByNames,
 }: {
   transactions: Transaction[]
   categories: Category[]
   paymentModes: PaymentMode[]
+  events: Event[]
   addedByNames: Record<AddedBy, string>
 }) {
   const [query, setQuery] = useState("")
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
+  const [eventId, setEventId] = useState(ALL_EVENTS_VALUE)
 
   const categoriesById = useMemo(
     () => new Map(categories.map((c) => [c.CategoryID, c])),
@@ -53,16 +65,30 @@ export function TransactionsExplorer({
     return transactions.filter((tx) => {
       if (dateFrom && tx.Date < dateFrom) return false
       if (dateTo && tx.Date > dateTo) return false
+      if (eventId !== ALL_EVENTS_VALUE && tx.EventID !== eventId) return false
       return matchesQuery(tx, addedByNames, normalizedQuery)
     })
-  }, [transactions, addedByNames, query, dateFrom, dateTo])
+  }, [transactions, addedByNames, query, dateFrom, dateTo, eventId])
 
-  const hasActiveFilters = Boolean(query || dateFrom || dateTo)
+  const selectedEvent = events.find((e) => e.EventID === eventId)
+
+  const eventTotal = useMemo(() => {
+    if (!selectedEvent) return null
+    return filtered.reduce(
+      (sum, tx) => sum + (tx.Type === "Income" ? -tx.Amount : tx.Amount),
+      0
+    )
+  }, [filtered, selectedEvent])
+
+  const hasActiveFilters = Boolean(
+    query || dateFrom || dateTo || eventId !== ALL_EVENTS_VALUE
+  )
 
   const clearFilters = () => {
     setQuery("")
     setDateFrom("")
     setDateTo("")
+    setEventId(ALL_EVENTS_VALUE)
   }
 
   return (
@@ -114,6 +140,34 @@ export function TransactionsExplorer({
               onChange={(e) => setDateTo(e.target.value)}
             />
           </div>
+          <div>
+            <label
+              htmlFor="transaction-event"
+              className="text-muted-foreground mb-1.5 block text-xs font-medium"
+            >
+              Event
+            </label>
+            <Select
+              value={eventId}
+              onValueChange={(value) => setEventId(value ?? ALL_EVENTS_VALUE)}
+            >
+              <SelectTrigger id="transaction-event" className="w-40">
+                <SelectValue>
+                  {(value: string) =>
+                    events.find((e) => e.EventID === value)?.Name ?? "All events"
+                  }
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_EVENTS_VALUE}>All events</SelectItem>
+                {events.map((event) => (
+                  <SelectItem key={event.EventID} value={event.EventID}>
+                    {event.Name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         {hasActiveFilters ? (
           <Button
@@ -129,11 +183,25 @@ export function TransactionsExplorer({
         ) : null}
       </div>
 
+      {selectedEvent ? (
+        <div className="bg-muted/50 flex items-center justify-between rounded-lg border px-4 py-3">
+          <span className="text-sm font-medium">{selectedEvent.Name}</span>
+          <span className="text-sm">
+            {filtered.length} {filtered.length === 1 ? "transaction" : "transactions"} ·{" "}
+            <span className="font-semibold">
+              {eventTotal !== null && eventTotal < 0 ? "+" : ""}₹
+              {Math.abs(eventTotal ?? 0).toFixed(2)}
+            </span>
+          </span>
+        </div>
+      ) : null}
+
       <GroupedTransactionList
         transactions={filtered}
         categoriesById={categoriesById}
         categories={categories}
         paymentModes={paymentModes}
+        events={events}
         addedByNames={addedByNames}
         emptyMessage={
           hasActiveFilters

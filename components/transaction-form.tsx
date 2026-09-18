@@ -8,6 +8,7 @@ import { toast } from "sonner"
 
 import { createTransactionAction, updateTransactionAction } from "@/app/(app)/actions"
 import { CategoryCombobox } from "@/components/category-combobox"
+import { EventCombobox } from "@/components/event-combobox"
 import { PaymentModeCombobox } from "@/components/payment-mode-combobox"
 import { Button } from "@/components/ui/button"
 import {
@@ -20,7 +21,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
-import type { AddedBy, Category, PaymentMode, Transaction } from "@/lib/types"
+import type { AddedBy, Category, Event, PaymentMode, Transaction } from "@/lib/types"
 import { transactionSchema, type TransactionFormValues } from "@/lib/validation"
 
 const ADDED_BY_STORAGE_KEY = "fin360:addedBy"
@@ -34,17 +35,21 @@ export function TransactionForm({
   transaction,
   categories,
   paymentModes,
+  events,
   addedByNames,
   onCategoryCreated,
   onPaymentModeCreated,
+  onEventCreated,
   onSuccess,
 }: {
   transaction?: Transaction
   categories: Category[]
   paymentModes: PaymentMode[]
+  events: Event[]
   addedByNames: Record<AddedBy, string>
   onCategoryCreated: (category: Category) => void
   onPaymentModeCreated: (paymentMode: PaymentMode) => void
+  onEventCreated: (event: Event) => void
   onSuccess: () => void
 }) {
   const router = useRouter()
@@ -62,6 +67,7 @@ export function TransactionForm({
           IsRecurring: transaction.IsRecurring,
           AddedBy: transaction.AddedBy,
           PaymentModeID: transaction.PaymentModeID,
+          EventID: transaction.EventID,
         }
       : {
           Amount: 0,
@@ -71,6 +77,7 @@ export function TransactionForm({
           IsRecurring: false,
           AddedBy: "User1",
           PaymentModeID: "",
+          EventID: "",
         },
   })
 
@@ -95,10 +102,18 @@ export function TransactionForm({
       return
     }
 
+    const event = values.EventID
+      ? events.find((e) => e.EventID === values.EventID)
+      : undefined
+    if (values.EventID && !event) {
+      form.setError("EventID", { message: "Select an event" })
+      return
+    }
+
     startTransition(async () => {
       const result = transaction
-        ? await updateTransactionAction(transaction.TxID, values, category, paymentMode)
-        : await createTransactionAction(values, category, paymentMode)
+        ? await updateTransactionAction(transaction.TxID, values, category, paymentMode, event)
+        : await createTransactionAction(values, category, paymentMode, event)
       if (result.error) {
         form.setError("root", { message: result.error })
         return
@@ -117,6 +132,7 @@ export function TransactionForm({
           IsRecurring: false,
           AddedBy: values.AddedBy,
           PaymentModeID: "",
+          EventID: "",
         })
       }
       router.refresh()
@@ -185,6 +201,25 @@ export function TransactionForm({
                   value={field.value}
                   onChange={field.onChange}
                   onPaymentModeCreated={onPaymentModeCreated}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="EventID"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Event (optional)</FormLabel>
+              <FormControl>
+                <EventCombobox
+                  events={events}
+                  value={field.value}
+                  onChange={field.onChange}
+                  onEventCreated={onEventCreated}
                 />
               </FormControl>
               <FormMessage />

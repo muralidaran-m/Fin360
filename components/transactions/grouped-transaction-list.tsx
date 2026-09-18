@@ -6,13 +6,14 @@ import {
 } from "@/components/ui/accordion"
 import { TransactionRow } from "@/components/transactions/transaction-list"
 import { groupTransactionsByMonthAndDate } from "@/lib/transaction-groups"
-import type { AddedBy, Category, PaymentMode, Transaction } from "@/lib/types"
+import type { AddedBy, Category, Event, PaymentMode, Transaction } from "@/lib/types"
 
 export function GroupedTransactionList({
   transactions,
   categoriesById,
   categories,
   paymentModes,
+  events,
   addedByNames,
   emptyMessage = "No transactions yet. Tap the + button to add one.",
 }: {
@@ -20,6 +21,7 @@ export function GroupedTransactionList({
   categoriesById: Map<string, Category>
   categories: Category[]
   paymentModes: PaymentMode[]
+  events: Event[]
   addedByNames: Record<AddedBy, string>
   emptyMessage?: string
 }) {
@@ -64,6 +66,7 @@ export function GroupedTransactionList({
                           addedByNames={addedByNames}
                           categories={categories}
                           paymentModes={paymentModes}
+                          events={events}
                         />
                       ))}
                     </ul>
