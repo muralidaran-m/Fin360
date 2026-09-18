@@ -6,6 +6,10 @@ import {
   addPaymentMode,
   addSandboxPlan,
   addTransaction,
+  deleteCategory,
+  deleteEvent,
+  deletePaymentMode,
+  deleteTransaction,
   updateAddedByNames,
   updateCategory,
   updateEvent,
@@ -23,6 +27,15 @@ import {
 import type { Category, Event, PaymentMode, SandboxPlan } from "@/lib/types"
 
 export type ActionState = { error?: string }
+
+async function toActionState(action: () => Promise<void>): Promise<ActionState> {
+  try {
+    await action()
+    return {}
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Something went wrong" }
+  }
+}
 
 export type CategoryActionState = { error?: string; category?: Category }
 
@@ -62,6 +75,10 @@ export async function updateCategoryAction(
   return {}
 }
 
+export async function deleteCategoryAction(categoryId: string): Promise<ActionState> {
+  return toActionState(() => deleteCategory(categoryId))
+}
+
 export type PaymentModeActionState = { error?: string; paymentMode?: PaymentMode }
 
 export async function createPaymentModeAction(
@@ -95,6 +112,10 @@ export async function updatePaymentModeAction(
   return {}
 }
 
+export async function deletePaymentModeAction(paymentModeId: string): Promise<ActionState> {
+  return toActionState(() => deletePaymentMode(paymentModeId))
+}
+
 export type EventActionState = { error?: string; event?: Event }
 
 export async function createEventAction(formData: FormData): Promise<EventActionState> {
@@ -124,6 +145,10 @@ export async function updateEventAction(
 
   await updateEvent(eventId, parsed.data)
   return {}
+}
+
+export async function deleteEventAction(eventId: string): Promise<ActionState> {
+  return toActionState(() => deleteEvent(eventId))
 }
 
 export async function updateHouseholdSettingsAction(
@@ -252,6 +277,10 @@ export async function updateTransactionAction(
   })
 
   return {}
+}
+
+export async function deleteTransactionAction(txId: string): Promise<ActionState> {
+  return toActionState(() => deleteTransaction(txId))
 }
 
 export type SandboxPlanActionState = { error?: string; plan?: SandboxPlan }

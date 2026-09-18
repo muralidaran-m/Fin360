@@ -101,6 +101,20 @@ export async function updateRow(
   await row.save()
 }
 
+export async function deleteRow(
+  sheetName: SheetName,
+  idField: string,
+  idValue: string
+): Promise<void> {
+  const sheet = await getSheet(sheetName)
+  const rows = await sheet.getRows()
+  const row = rows.find((r) => r.get(idField) === idValue)
+  if (!row) {
+    throw new Error(`Row with ${idField}=${idValue} not found in ${sheetName}`)
+  }
+  await row.delete()
+}
+
 /** Like updateRow, but appends a new row instead of throwing if none is found. */
 export async function upsertRow(
   sheetName: SheetName,

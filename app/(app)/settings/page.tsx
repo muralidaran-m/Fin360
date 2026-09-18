@@ -1,9 +1,15 @@
+import {
+  deleteCategoryAction,
+  deleteEventAction,
+  deletePaymentModeAction,
+} from "@/app/(app)/actions"
 import { AddCategoryButton } from "@/app/(app)/settings/add-category-button"
 import { AddEventButton } from "@/app/(app)/settings/add-event-button"
 import { AddPaymentModeButton } from "@/app/(app)/settings/add-payment-mode-button"
 import { EditCategoryButton } from "@/app/(app)/settings/edit-category-button"
 import { EditEventButton } from "@/app/(app)/settings/edit-event-button"
 import { EditPaymentModeButton } from "@/app/(app)/settings/edit-payment-mode-button"
+import { DeleteConfirmButton } from "@/components/delete-confirm-button"
 import { HouseholdSettingsForm } from "@/components/household-settings-form"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -62,6 +68,14 @@ export default async function SettingsPage() {
                     <span className="flex-1 font-medium">{category.Name}</span>
                     <Badge variant="secondary">{category.Type}</Badge>
                     <EditCategoryButton category={category} />
+                    <DeleteConfirmButton
+                      id={category.CategoryID}
+                      action={deleteCategoryAction}
+                      ariaLabel={`Delete ${category.Name}`}
+                      successMessage={`Deleted category "${category.Name}"`}
+                      confirmTitle="Delete category"
+                      confirmDescription={`This will permanently delete "${category.Name}". This can't be undone.`}
+                    />
                   </li>
                 )
               })}
@@ -89,6 +103,14 @@ export default async function SettingsPage() {
                 >
                   <span className="flex-1 font-medium">{paymentMode.Name}</span>
                   <EditPaymentModeButton paymentMode={paymentMode} />
+                  <DeleteConfirmButton
+                    id={paymentMode.PaymentModeID}
+                    action={deletePaymentModeAction}
+                    ariaLabel={`Delete ${paymentMode.Name}`}
+                    successMessage={`Deleted payment mode "${paymentMode.Name}"`}
+                    confirmTitle="Delete payment mode"
+                    confirmDescription={`This will permanently delete "${paymentMode.Name}". This can't be undone.`}
+                  />
                 </li>
               ))}
             </ul>
@@ -116,6 +138,14 @@ export default async function SettingsPage() {
                 >
                   <span className="flex-1 font-medium">{event.Name}</span>
                   <EditEventButton event={event} />
+                  <DeleteConfirmButton
+                    id={event.EventID}
+                    action={deleteEventAction}
+                    ariaLabel={`Delete ${event.Name}`}
+                    successMessage={`Deleted event "${event.Name}"`}
+                    confirmTitle="Delete event"
+                    confirmDescription={`This will permanently delete "${event.Name}". This can't be undone.`}
+                  />
                 </li>
               ))}
             </ul>

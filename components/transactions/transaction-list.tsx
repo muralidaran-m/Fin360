@@ -2,6 +2,8 @@
 
 import { useState } from "react"
 
+import { deleteTransactionAction } from "@/app/(app)/actions"
+import { DeleteConfirmButton } from "@/components/delete-confirm-button"
 import { TransactionForm } from "@/components/transaction-form"
 import { Badge } from "@/components/ui/badge"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -99,6 +101,18 @@ export function TransactionRow({
               onEventCreated={(event) => setLocalEvents((prev) => [...prev, event])}
               onSuccess={() => setOpen(false)}
             />
+            <div className="mt-4 border-t pt-4">
+              <DeleteConfirmButton
+                id={tx.TxID}
+                action={deleteTransactionAction}
+                variant="button"
+                ariaLabel="Delete transaction"
+                successMessage="Transaction deleted"
+                confirmTitle="Delete transaction"
+                confirmDescription={`This will permanently delete this ₹${tx.Amount.toFixed(2)} ${tx.CategoryName} transaction. This can't be undone.`}
+                onDeleted={() => setOpen(false)}
+              />
+            </div>
           </div>
         </SheetContent>
       </Sheet>

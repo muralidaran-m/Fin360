@@ -3,7 +3,7 @@ import "server-only"
 import { unstable_cache as cache, updateTag } from "next/cache"
 import { v4 as uuid } from "uuid"
 
-import { appendRow, getRows, updateRow, upsertRow } from "@/lib/sheets"
+import { appendRow, deleteRow, getRows, updateRow, upsertRow } from "@/lib/sheets"
 import {
   DEFAULT_ADDED_BY_NAMES,
   SETTING_KEYS,
@@ -122,6 +122,19 @@ export async function updateCategory(
   updateTag(TAGS.categories)
 }
 
+function inUseError(count: number): Error {
+  return new Error(`Can't delete — used by ${count} transaction${count === 1 ? "" : "s"}`)
+}
+
+export async function deleteCategory(categoryId: string): Promise<void> {
+  const transactions = await getTransactions()
+  const inUse = transactions.filter((t) => t.CategoryID === categoryId).length
+  if (inUse > 0) throw inUseError(inUse)
+
+  await deleteRow(SHEET_NAMES.Categories, "CategoryID", categoryId)
+  updateTag(TAGS.categories)
+}
+
 export async function addPaymentMode(
   input: Omit<PaymentMode, "PaymentModeID">
 ): Promise<PaymentMode> {
@@ -136,6 +149,15 @@ export async function updatePaymentMode(
   input: Omit<PaymentMode, "PaymentModeID">
 ): Promise<void> {
   await updateRow(SHEET_NAMES.PaymentModes, "PaymentModeID", paymentModeId, input)
+  updateTag(TAGS.paymentModes)
+}
+
+export async function deletePaymentMode(paymentModeId: string): Promise<void> {
+  const transactions = await getTransactions()
+  const inUse = transactions.filter((t) => t.PaymentModeID === paymentModeId).length
+  if (inUse > 0) throw inUseError(inUse)
+
+  await deleteRow(SHEET_NAMES.PaymentModes, "PaymentModeID", paymentModeId)
   updateTag(TAGS.paymentModes)
 }
 
@@ -154,6 +176,15 @@ export async function updateEvent(
   updateTag(TAGS.events)
 }
 
+export async function deleteEvent(eventId: string): Promise<void> {
+  const transactions = await getTransactions()
+  const inUse = transactions.filter((t) => t.EventID === eventId).length
+  if (inUse > 0) throw inUseError(inUse)
+
+  await deleteRow(SHEET_NAMES.Events, "EventID", eventId)
+  updateTag(TAGS.events)
+}
+
 export async function addTransaction(
   input: Omit<Transaction, "TxID">
 ): Promise<Transaction> {
@@ -168,6 +199,11 @@ export async function updateTransaction(
   input: Omit<Transaction, "TxID">
 ): Promise<void> {
   await updateRow(SHEET_NAMES.Transactions, "TxID", txId, input)
+  updateTag(TAGS.transactions)
+}
+
+export async function deleteTransaction(txId: string): Promise<void> {
+  await deleteRow(SHEET_NAMES.Transactions, "TxID", txId)
   updateTag(TAGS.transactions)
 }
 
