@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { CreditCardCycleCard } from "@/components/dashboard/credit-card-cycle-card"
 import { HouseholdSplitBar } from "@/components/dashboard/household-split-bar"
 import { RecurringExpenseCard } from "@/components/dashboard/recurring-expense-card"
 import { SpendBarChart } from "@/components/dashboard/spend-bar-chart"
@@ -7,6 +8,7 @@ import { TotalSpendCard } from "@/components/dashboard/total-spend-card"
 import { TransactionList } from "@/components/transactions/transaction-list"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
+  creditCardCycleSummaries,
   filterByRange,
   getTimeframeRange,
   householdSplit,
@@ -58,6 +60,8 @@ export default async function Home() {
     )
   )
 
+  const creditCardCycles = creditCardCycleSummaries(transactions, paymentModes, now)
+
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -74,6 +78,14 @@ export default async function Home() {
         />
         <HouseholdSplitBar split={split} names={addedByNames} />
       </div>
+
+      {creditCardCycles.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {creditCardCycles.map((summary) => (
+            <CreditCardCycleCard key={summary.paymentModeId} summary={summary} />
+          ))}
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-3">
         <div className="xl:col-span-2">
