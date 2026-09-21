@@ -9,7 +9,7 @@ export function parseIsoDate(date: string): Date {
   return new Date(year, month - 1, day)
 }
 
-function toISODate(d: Date): string {
+export function toISODate(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 

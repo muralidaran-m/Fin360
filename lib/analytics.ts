@@ -1,5 +1,5 @@
-import { getEffectiveDate } from "@/lib/credit-card"
-import type { AddedBy, Category, CategoryType, Transaction } from "@/lib/types"
+import { computeBillDate, getEffectiveDate, parseIsoDate } from "@/lib/credit-card"
+import type { AddedBy, Category, CategoryType, PaymentMode, Transaction } from "@/lib/types"
 
 export type Timeframe = "current" | "last" | "ytd"
 
@@ -252,4 +252,51 @@ export function householdSplit(transactions: Transaction[], range: DateRange): H
     totals[t.AddedBy] += t.Amount
   }
   return totals
+}
+
+export type CreditCardCycleSummary = {
+  paymentModeId: string
+  paymentModeName: string
+  dueDate: string
+  daysRemaining: number
+  amount: number
+}
+
+/**
+ * For each configured credit card, the spend on its current (open,
+ * not-yet-billed) cycle and the days remaining until that cycle's due date.
+ * A purchase made "today" would land in this same cycle, so its bill date
+ * (via computeBillDate) identifies the cycle, and every past transaction
+ * sharing that bill date belongs to it too.
+ */
+export function creditCardCycleSummaries(
+  transactions: Transaction[],
+  paymentModes: PaymentMode[],
+  now = new Date()
+): CreditCardCycleSummary[] {
+  const today = toISODate(now)
+
+  return paymentModes
+    .filter((p) => p.Kind === "CreditCard" && p.StatementDay > 0 && p.DueDays > 0)
+    .map((p) => {
+      const dueDate = computeBillDate(today, p)
+      const daysRemaining = Math.round(
+        (parseIsoDate(dueDate).getTime() - parseIsoDate(today).getTime()) /
+          (1000 * 60 * 60 * 24)
+      )
+      const amount = transactions
+        .filter(
+          (t) =>
+            t.PaymentModeID === p.PaymentModeID && t.Type === "Expense" && t.BillDate === dueDate
+        )
+        .reduce((sum, t) => sum + t.Amount, 0)
+
+      return {
+        paymentModeId: p.PaymentModeID,
+        paymentModeName: p.Name,
+        dueDate,
+        daysRemaining,
+        amount,
+      }
+    })
 }
