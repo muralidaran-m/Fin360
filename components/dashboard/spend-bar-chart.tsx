@@ -36,6 +36,8 @@ const DIMENSION_LABELS: Record<BreakdownDimension, string> = Object.fromEntries(
   DIMENSIONS.map((d) => [d.value, d.label])
 ) as Record<BreakdownDimension, string>
 
+const TOP_N = 10
+
 export function SpendBarChart({
   transactions,
   categoriesById,
@@ -47,10 +49,19 @@ export function SpendBarChart({
 }) {
   const [dimension, setDimension] = useState<BreakdownDimension>("category")
 
-  const data = useMemo(
-    () => spendByDimension(transactions, categoriesById, range, dimension),
-    [transactions, categoriesById, range, dimension]
-  )
+  const data = useMemo(() => {
+    const points = spendByDimension(transactions, categoriesById, range, dimension)
+    if (points.length <= TOP_N) return points
+
+    const otherAmount = points
+      .slice(TOP_N)
+      .reduce((sum, point) => sum + point.amount, 0)
+
+    return [
+      ...points.slice(0, TOP_N),
+      { key: "other", label: "Other", amount: otherAmount },
+    ]
+  }, [transactions, categoriesById, range, dimension])
 
   return (
     <Card>

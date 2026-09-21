@@ -52,11 +52,26 @@ export default async function Home() {
     RECENT_TRANSACTIONS_PREVIEW_COUNT
   )
 
+  const recurringTransactions = sortTransactionsByRecency(
+    filterByRange(transactions, range).filter(
+      (t) => t.IsRecurring && t.Type === "Expense"
+    )
+  )
+
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <TotalSpendCard amount={spend} previousAmount={lastMonthSpend} />
-        <RecurringExpenseCard amount={recurring} previousAmount={lastMonthRecurring} />
+        <RecurringExpenseCard
+          amount={recurring}
+          previousAmount={lastMonthRecurring}
+          transactions={recurringTransactions}
+          categoriesById={categoriesById}
+          categories={categories}
+          paymentModes={paymentModes}
+          events={events}
+          addedByNames={addedByNames}
+        />
         <HouseholdSplitBar split={split} names={addedByNames} />
       </div>
 
