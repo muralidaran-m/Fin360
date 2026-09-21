@@ -36,6 +36,7 @@ function matchesQuery(
 }
 
 const ALL_EVENTS_VALUE = "__all__"
+const ALL_PAYMENT_MODES_VALUE = "__all__"
 
 export function TransactionsExplorer({
   transactions,
@@ -54,6 +55,7 @@ export function TransactionsExplorer({
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
   const [eventId, setEventId] = useState(ALL_EVENTS_VALUE)
+  const [paymentModeId, setPaymentModeId] = useState(ALL_PAYMENT_MODES_VALUE)
 
   const categoriesById = useMemo(
     () => new Map(categories.map((c) => [c.CategoryID, c])),
@@ -66,11 +68,14 @@ export function TransactionsExplorer({
       if (dateFrom && tx.Date < dateFrom) return false
       if (dateTo && tx.Date > dateTo) return false
       if (eventId !== ALL_EVENTS_VALUE && tx.EventID !== eventId) return false
+      if (paymentModeId !== ALL_PAYMENT_MODES_VALUE && tx.PaymentModeID !== paymentModeId)
+        return false
       return matchesQuery(tx, addedByNames, normalizedQuery)
     })
-  }, [transactions, addedByNames, query, dateFrom, dateTo, eventId])
+  }, [transactions, addedByNames, query, dateFrom, dateTo, eventId, paymentModeId])
 
   const selectedEvent = events.find((e) => e.EventID === eventId)
+  const selectedPaymentMode = paymentModes.find((p) => p.PaymentModeID === paymentModeId)
 
   const eventTotal = useMemo(() => {
     if (!selectedEvent) return null
@@ -81,7 +86,11 @@ export function TransactionsExplorer({
   }, [filtered, selectedEvent])
 
   const hasActiveFilters = Boolean(
-    query || dateFrom || dateTo || eventId !== ALL_EVENTS_VALUE
+    query ||
+      dateFrom ||
+      dateTo ||
+      eventId !== ALL_EVENTS_VALUE ||
+      paymentModeId !== ALL_PAYMENT_MODES_VALUE
   )
 
   const clearFilters = () => {
@@ -89,6 +98,7 @@ export function TransactionsExplorer({
     setDateFrom("")
     setDateTo("")
     setEventId(ALL_EVENTS_VALUE)
+    setPaymentModeId(ALL_PAYMENT_MODES_VALUE)
   }
 
   return (
@@ -168,6 +178,38 @@ export function TransactionsExplorer({
               </SelectContent>
             </Select>
           </div>
+          <div>
+            <label
+              htmlFor="transaction-payment-mode"
+              className="text-muted-foreground mb-1.5 block text-xs font-medium"
+            >
+              Payment mode
+            </label>
+            <Select
+              value={paymentModeId}
+              onValueChange={(value) => setPaymentModeId(value ?? ALL_PAYMENT_MODES_VALUE)}
+            >
+              <SelectTrigger id="transaction-payment-mode" className="w-40">
+                <SelectValue>
+                  {(value: string) =>
+                    paymentModes.find((p) => p.PaymentModeID === value)?.Name ??
+                    "All payment modes"
+                  }
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_PAYMENT_MODES_VALUE}>All payment modes</SelectItem>
+                {paymentModes.map((paymentMode) => (
+                  <SelectItem
+                    key={paymentMode.PaymentModeID}
+                    value={paymentMode.PaymentModeID}
+                  >
+                    {paymentMode.Name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         {hasActiveFilters ? (
           <Button
@@ -203,6 +245,7 @@ export function TransactionsExplorer({
         paymentModes={paymentModes}
         events={events}
         addedByNames={addedByNames}
+        byBillingCycle={selectedPaymentMode?.Kind === "CreditCard"}
         emptyMessage={
           hasActiveFilters
             ? "No transactions match your filters."

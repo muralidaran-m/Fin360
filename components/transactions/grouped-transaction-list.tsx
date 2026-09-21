@@ -1,3 +1,7 @@
+"use client"
+
+import { useState } from "react"
+
 import {
   Accordion,
   AccordionItem,
@@ -15,6 +19,7 @@ export function GroupedTransactionList({
   paymentModes,
   events,
   addedByNames,
+  byBillingCycle = false,
   emptyMessage = "No transactions yet. Tap the + button to add one.",
 }: {
   transactions: Transaction[]
@@ -23,17 +28,30 @@ export function GroupedTransactionList({
   paymentModes: PaymentMode[]
   events: Event[]
   addedByNames: Record<AddedBy, string>
+  byBillingCycle?: boolean
   emptyMessage?: string
 }) {
+  const monthGroups = groupTransactionsByMonthAndDate(transactions, { byBillingCycle })
+  const defaultOpen = monthGroups.slice(0, 1).map((group) => group.month)
+
+  // The set of months (and which one should start open) shifts whenever the
+  // filtered transactions change. Base UI's Accordion is uncontrolled, so we
+  // drive it ourselves and re-sync `openMonths` to the new default here
+  // (adjusting state during render, per https://react.dev/learn/you-might-not-need-an-effect)
+  // rather than passing a moving `defaultValue`, which it warns against.
+  const [openMonths, setOpenMonths] = useState(defaultOpen)
+  const [prevDefaultOpen, setPrevDefaultOpen] = useState(defaultOpen)
+  if (defaultOpen.join(",") !== prevDefaultOpen.join(",")) {
+    setPrevDefaultOpen(defaultOpen)
+    setOpenMonths(defaultOpen)
+  }
+
   if (transactions.length === 0) {
     return <p className="text-muted-foreground text-sm">{emptyMessage}</p>
   }
 
-  const monthGroups = groupTransactionsByMonthAndDate(transactions)
-  const defaultOpen = monthGroups.slice(0, 1).map((group) => group.month)
-
   return (
-    <Accordion defaultValue={defaultOpen} multiple>
+    <Accordion value={openMonths} onValueChange={setOpenMonths} multiple>
       {monthGroups.map((monthGroup) => {
         const count = monthGroup.dateGroups.reduce(
           (sum, dateGroup) => sum + dateGroup.transactions.length,
@@ -45,9 +63,17 @@ export function GroupedTransactionList({
             <AccordionTrigger>
               <span className="text-primary text-base font-bold tracking-tight">
                 {monthGroup.label}
+                {byBillingCycle ? (
+                  <span className="text-muted-foreground ml-1.5 text-xs font-normal">
+                    billing cycle
+                  </span>
+                ) : null}
               </span>
               <span className="text-muted-foreground mr-auto text-xs font-normal">
                 {count} {count === 1 ? "transaction" : "transactions"}
+              </span>
+              <span className="text-sm font-semibold">
+                {monthGroup.total < 0 ? "+" : ""}₹{Math.abs(monthGroup.total).toFixed(2)}
               </span>
             </AccordionTrigger>
             <AccordionPanel>
