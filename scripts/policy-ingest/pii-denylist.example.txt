@@ -1,0 +1,44 @@
+# Sample deny-list for policy-ingest. ALL VALUES BELOW ARE FAKE.
+#
+# Copy this file to private/pii-denylist.txt at the project root (gitignored) and replace
+# the values with your own. Never put real values in this example file: it is committed.
+#
+# Format: one item per line, "type: value". Lines starting with # are ignored.
+# Matching ignores case, spacing and dashes, so "98765 43210" also matches "9876543210".
+# Values shorter than 3 characters are ignored.
+#
+# Types: name, pan, aadhaar, phone, email, address, dob, other
+#   name    - the full name, and each part of it (3+ letters) is also checked on its own,
+#             so "Mr. Iyer" or a lone "Ravi" counts as a leak.
+#   address - list each distinctive part separately (building, street, locality, PIN)
+#             rather than the whole address, since documents wrap lines differently.
+#   dob     - add every format your documents use.
+#   other   - anything else that identifies you: policy, folio, bank account, CKYC, UAN.
+
+# --- You (policyholder / life assured) ---
+name: Ravi Kumar Iyer
+pan: ABCPI1234K
+aadhaar: 2345 6789 0123
+phone: 98765 43210
+email: ravi.iyer@example.com
+dob: 12/07/1985
+dob: 12-Jul-1985
+dob: July 12, 1985
+
+# --- Family: spouse, children, nominees, appointee, parents named in documents ---
+name: Meera Iyer
+name: Ananya Iyer
+phone: 91234 56789
+dob: 04/08/2014
+
+# --- Addresses (current and any older ones that appear on policies) ---
+address: Flat 4B, Lotus Apartments
+address: 12 Gandhi Road
+address: Adyar
+address: 600020
+
+# --- Account and policy identifiers ---
+other: 23456789
+other: 1234567890/12
+other: 50100123456789
+other: 12345678901234

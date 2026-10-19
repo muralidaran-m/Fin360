@@ -104,6 +104,9 @@ function parsePolicy(raw: Record<string, unknown>): Policy {
     Benefits: parseStringArray(raw.Benefits),
     Summary: String(raw.Summary ?? ""),
     IllustrativeOnly: parseBoolean(raw.IllustrativeOnly),
+    FundUnits: parseNullableNumber(raw.FundUnits),
+    FundNav: parseNullableNumber(raw.FundNav),
+    FundValueDate: String(raw.FundValueDate ?? ""),
   } as Policy
 }
 
@@ -161,13 +164,17 @@ export const getSandboxPlans = cache(
   { tags: [TAGS.sandboxPlans] }
 )
 
+// Policies are written by `npm run policy:apply`, outside the app, so no updateTag
+// call can invalidate them; a short expiry lets new rows show up within a minute.
+const POLICY_CACHE_SECONDS = 60
+
 export const getPolicies = cache(
   async (): Promise<Policy[]> => {
     const rows = await getRows<Record<string, unknown>>(SHEET_NAMES.Policies)
     return rows.map(parsePolicy)
   },
   ["policies"],
-  { tags: [TAGS.policies] }
+  { tags: [TAGS.policies], revalidate: POLICY_CACHE_SECONDS }
 )
 
 export const getPolicyPayouts = cache(
@@ -176,7 +183,7 @@ export const getPolicyPayouts = cache(
     return rows.map(parsePolicyPayout)
   },
   ["policy_payouts"],
-  { tags: [TAGS.policyPayouts] }
+  { tags: [TAGS.policyPayouts], revalidate: POLICY_CACHE_SECONDS }
 )
 
 const getSettingsRaw = cache(
@@ -323,4 +330,15 @@ export async function updateSandboxPlan(
 ): Promise<void> {
   await updateRow(SHEET_NAMES.SandboxPlans, "PlanID", planId, input)
   updateTag(TAGS.sandboxPlans)
+}
+
+export async function updatePolicyFundValue(
+  policyId: string,
+  input: { FundUnits: number; FundNav: number; FundValueDate: string }
+): Promise<void> {
+  await updateRow(SHEET_NAMES.Policies, "PolicyID", policyId, {
+    ...input,
+    UpdatedAt: new Date().toISOString(),
+  })
+  updateTag(TAGS.policies)
 }

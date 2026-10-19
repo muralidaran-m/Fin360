@@ -48,6 +48,21 @@ export const eventSchema = z.object({
 
 export type EventFormValues = z.infer<typeof eventSchema>
 
+export const fundValueSchema = z.object({
+  FundUnits: z.coerce
+    .number({ invalid_type_error: "Units are required" })
+    .positive("Units must be greater than 0"),
+  FundNav: z.coerce
+    .number({ invalid_type_error: "NAV is required" })
+    .positive("NAV must be greater than 0"),
+  FundValueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date is required")
+    .refine((d) => d <= new Date().toISOString().slice(0, 10), "Date can't be in the future"),
+})
+
+export type FundValueFormValues = z.infer<typeof fundValueSchema>
+
 export const transactionSchema = z.object({
   Amount: z.coerce
     .number({ invalid_type_error: "Amount is required" })

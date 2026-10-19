@@ -89,5 +89,10 @@ def test_cli_refuses_private_paths_inside_claude_code():
 
 @pytest.mark.skipif(not llm.healthy(), reason="llama-server not running")
 def test_local_model_flags_unredacted_name():
-    findings = llm.scan("Witness: Farhan Siddiqui, Kochi\nPremium: Rs. 1,00,000 Annual")
-    assert any("Farhan" in f["text"] for f in findings)
+    result = llm.scan("Witness: Farhan Siddiqui, Kochi\nPremium: Rs. 1,00,000 Annual")
+    assert any("Farhan" in f["text"] for f in result.findings)
+
+
+def test_scan_skips_lines_with_nothing_to_find():
+    assert llm._chunks("Premium: Rs. 1,00,000 Annual\nName: [POLICYHOLDER]\n1 120,000 122,999") == []
+    assert llm._chunks("Witness: Farhan Siddiqui") != []

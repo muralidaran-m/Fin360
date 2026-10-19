@@ -6,6 +6,8 @@ import {
   buildPolicyInsight,
   countdown,
   formatCountdown,
+  fundValue,
+  isMarketLinked,
   planToRecords,
   policyToRow,
   premiumSchedule,
@@ -166,5 +168,51 @@ describe("plan contract", () => {
     assert.equal(row.Riders, '["Waiver"]')
     assert.equal(row.SumAssured, "")
     assert.equal(row.MaturityDate, "")
+  })
+})
+
+describe("fundValue", () => {
+  const ulip: Policy = {
+    ...basePolicy,
+    Type: "ulip",
+    StartDate: "2024-01-10",
+    PremiumAmount: 5000,
+    PremiumFrequency: "monthly",
+    PremiumPayingTermYrs: 5,
+    IllustrativeOnly: true,
+  }
+
+  it("is null until units, NAV and date are all entered", () => {
+    assert.equal(fundValue(ulip), null)
+    assert.equal(fundValue({ ...ulip, FundUnits: 1000, FundNav: 12.5, FundValueDate: "" }), null)
+  })
+
+  it("values units at NAV and compares with premiums due by the NAV date", () => {
+    const fv = fundValue({ ...ulip, FundUnits: 4000, FundNav: 15, FundValueDate: "2025-01-20" })
+    assert.ok(fv)
+    assert.equal(fv.value, 60000)
+    assert.equal(fv.paidByThen, 13 * 5000) // Jan 2024 .. Jan 2025 installments
+    assert.equal(fv.gain, 60000 - 13 * 5000)
+  })
+
+  it("treats ULIPs, funds and illustrative-only plans as market-linked", () => {
+    assert.equal(isMarketLinked(ulip), true)
+    assert.equal(isMarketLinked({ ...basePolicy, Type: "child", IllustrativeOnly: true }), true)
+    assert.equal(isMarketLinked(basePolicy), false)
+  })
+
+  it("is never written by policy:apply, so applying a plan keeps entered values", () => {
+    const plan = policyPlanSchema.parse({
+      policy: {
+        nickname: "u", insurer: "Acme", planName: "ULIP", type: "ulip", policyNoLast4: null,
+        startDate: "2024-01-10", premiumAmount: 5000, premiumFrequency: "monthly",
+        premiumPayingTermYrs: 5, policyTermYrs: 62, maturityDate: null, vestingDate: null,
+        sumAssured: null, lockInYrs: 5, riders: [], benefits: [], summary: "",
+        illustrativeOnly: true,
+      },
+      payouts: [],
+    })
+    const row = policyToRow(planToRecords(plan, "id", () => "x", new Date()).policy)
+    assert.ok(!("FundUnits" in row) && !("FundNav" in row) && !("FundValueDate" in row))
   })
 })

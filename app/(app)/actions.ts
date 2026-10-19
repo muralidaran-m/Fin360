@@ -14,11 +14,13 @@ import {
   updateCategory,
   updateEvent,
   updatePaymentMode,
+  updatePolicyFundValue,
   updateTransaction,
 } from "@/lib/data"
 import {
   categorySchema,
   eventSchema,
+  fundValueSchema,
   householdSettingsSchema,
   paymentModeSchema,
   sandboxPlanSchema,
@@ -324,4 +326,19 @@ export async function createSandboxPlanAction(
 
   const plan = await addSandboxPlan(parsed.data)
   return { plan }
+}
+
+export async function updatePolicyFundValueAction(
+  policyId: string,
+  formData: FormData
+): Promise<ActionState> {
+  const parsed = fundValueSchema.safeParse({
+    FundUnits: formData.get("FundUnits"),
+    FundNav: formData.get("FundNav"),
+    FundValueDate: formData.get("FundValueDate"),
+  })
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid fund value" }
+  }
+  return toActionState(() => updatePolicyFundValue(policyId, parsed.data))
 }

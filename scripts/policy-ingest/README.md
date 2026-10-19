@@ -15,7 +15,7 @@ cd scripts/policy-ingest
 uv sync
 ```
 
-Create `private/pii-denylist.txt` at the project root (gitignored), one item per line:
+Copy [`pii-denylist.example.txt`](pii-denylist.example.txt) to `private/pii-denylist.txt` at the project root (gitignored) and replace the fake values with your own. Each line is one item:
 
 ```
 name: <your full name>
@@ -33,11 +33,11 @@ For scanned PDFs, also run `brew install ocrmypdf`.
 
 ## Each document
 
-Run these in your own terminal. Claude Code is blocked from `private/`.
+Run these from the project root (`fin360/`) in your own terminal. Claude Code is blocked from `private/`. The npm script wraps `uv run --project scripts/policy-ingest policy-ingest`, so paths stay relative to the root. Plain `uv run policy-ingest` only works from inside `scripts/policy-ingest`.
 
 ```bash
-uv run policy-ingest serve            # in a second terminal; local model on 127.0.0.1:8080
-uv run policy-ingest run ../../private/policies/inbox/pension.pdf --nickname pension
+npm run policy:ingest -- serve        # in a second terminal; local model on 127.0.0.1:8080
+npm run policy:ingest -- run private/policies/inbox/pension.pdf --nickname pension
 ```
 
 `run` performs four steps:
@@ -49,10 +49,12 @@ uv run policy-ingest run ../../private/policies/inbox/pension.pdf --nickname pen
 
 Check the plan JSON against your PDF, then apply it from the project root with `npm run policy:apply -- --plan=private/policies/pension.plan.json`.
 
+The local model defaults to `~/projects/llama.cpp/models/Qwen3-4B-Instruct-2507-Q4_K_M.gguf`, falling back to `Qwen3-1.7B-Q8_0.gguf` when the 4B file is missing; pass `--model` to `serve` to choose another. Compare models on fake data with `uv run python -m tests.synth.llm_bench <model.gguf> ...`. On that benchmark the 4B model caught 76% of planted leftovers vs 35% for 1.7B.
+
 Extraction needs `ANTHROPIC_API_KEY`, or an `ant auth login` profile. It uses `claude-opus-5-5` with server-side refusal fallback enabled.
 
 ## Improving redaction without sharing documents
 
-- **Share only the audit output.** If the audit shows misses, paste its output (after reading it) to the coding agent: `uv run policy-ingest audit pension --llm`. It shows counts and value shapes such as `Nominee : Xxxxx Xxxxx`, never the values themselves.
+- **Share only the audit output.** If the audit shows misses, paste its output (after reading it) to the coding agent: `npm run policy:ingest -- audit pension --llm`. It shows counts and value shapes such as `Nominee : Xxxxx Xxxxx`, never the values themselves.
 - **Describe misses with fake values.** For example: "a nominee name in a table under 'Relationship' was missed". The agent turns it into a synthetic test case.
 - **Run the tests.** `uv run pytest` checks recall per PII type on the synthetic documents (`tests/synth/`). Print the per-type table with `uv run python -m tests.synth.evaluate`.

@@ -3,7 +3,7 @@ import path from "node:path"
 
 import { v4 as uuid } from "uuid"
 
-import { PolicyCard } from "@/components/policies/policy-card"
+import { PolicyList } from "@/components/policies/policy-list"
 import { PolicyTimelineChart } from "@/components/policies/policy-timeline-chart"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getPolicies, getPolicyPayouts } from "@/lib/data"
@@ -115,6 +115,7 @@ export default async function PoliciesPage({
                 today={toISODate(today)}
                 rows={insights.map((i) => ({
                   nickname: i.policy.Nickname,
+                  label: i.policy.PlanName || i.policy.Nickname,
                   phases: i.phases.phases,
                   payoutOpenEnded: i.phases.payoutOpenEnded,
                 }))}
@@ -122,9 +123,7 @@ export default async function PoliciesPage({
             </CardContent>
           </Card>
 
-          {insights.map((insight) => (
-            <PolicyCard key={insight.policy.PolicyID} insight={insight} today={today} />
-          ))}
+          <PolicyList insights={insights} today={today} />
 
           <p className="text-muted-foreground text-xs">
             Premium progress assumes every installment was paid on its due date.

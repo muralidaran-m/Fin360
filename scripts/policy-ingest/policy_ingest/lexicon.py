@@ -40,5 +40,9 @@ LABEL_LEXICON = COMMON_WORDS | KEEP_TERMS | {
     holder's assured's agent's advisor's intermediary broker arn euin type status units
     nav scheme option growth idcw lock-in lock in illustration rate assumed gross net
     gst tax receipt received rs inr total due paid amount mode single regular limited
+    share value values death company ltd linked non-linked participating non-participating
+    unit statement consolidated transaction purchase sip closing balance market regards team
+    service welcome thanks loyalty additions waiver future illustrative shown performance
+    depend payable onwards issued thank choosing assist servicing request plan's lic's
     """.split()
 }

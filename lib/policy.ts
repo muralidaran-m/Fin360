@@ -312,6 +312,29 @@ export function policyToRow(policy: Policy): Record<string, CellValue> {
   )
 }
 
+/** Market-linked plans, whose value is units × NAV rather than a fixed promise. */
+export function isMarketLinked(policy: Pick<Policy, "Type" | "IllustrativeOnly">): boolean {
+  return policy.Type === "ulip" || policy.Type === "mf" || policy.IllustrativeOnly
+}
+
+export type FundValue = {
+  units: number
+  nav: number
+  value: number
+  asOf: string
+  /** Premiums due up to the as-of date, assuming each was paid on its due date. */
+  paidByThen: number | null
+  gain: number | null
+}
+
+export function fundValue(policy: Policy): FundValue | null {
+  const { FundUnits: units, FundNav: nav, FundValueDate: asOf } = policy
+  if (!units || !nav || !asOf) return null
+  const value = units * nav
+  const paidByThen = premiumSchedule(policy, parseIsoDate(asOf)).paidAmount
+  return { units, nav, value, asOf, paidByThen, gain: paidByThen === null ? null : value - paidByThen }
+}
+
 export function payoutToRow(payout: PolicyPayout): Record<string, CellValue> {
   return Object.fromEntries(Object.entries(payout).map(([k, v]) => [k, cell(v)]))
 }

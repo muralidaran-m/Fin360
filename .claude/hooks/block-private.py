@@ -8,9 +8,15 @@ import json
 import re
 import sys
 
-# Matches "private/..." as a relative path or ".../fin360/private", but not macOS
-# system paths like /private/tmp (the agent's scratchpad lives there).
-PATTERN = re.compile(r"(fin360/private\b|(^|[\s'\"=:(;|&<>])(\./)?private(/|\b))")
+# Matches "private/..." as a relative path, ".../fin360/private", or a bare "private" used
+# as a path argument (followed by end of command, a quote or a shell operator). Does not
+# match macOS system paths like /private/tmp (the agent's scratchpad lives there) or the
+# English word in prose ("a private individual").
+PATTERN = re.compile(
+    r"fin360/private\b"
+    r"|(^|[\s'\"=:(;|&<>])(\./)?private/"
+    r"|(^|[\s'\"=:(;|&<>])(\./)?private\s*($|['\";|&<>)])"
+)
 
 
 def main() -> int:

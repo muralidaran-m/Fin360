@@ -1,9 +1,9 @@
 """policy-ingest: redact policy PDFs locally, verify, then extract facts with Claude.
 
-Run these yourself in a terminal (not through Claude Code) when they touch private/:
+Run these yourself from the project root (not through Claude Code) when they touch private/:
 
-    uv run policy-ingest serve                         # local model, leave running
-    uv run policy-ingest run private/policies/inbox/pension.pdf --nickname pension
+    npm run policy:ingest -- serve                     # local model, leave running
+    npm run policy:ingest -- run private/policies/inbox/pension.pdf --nickname pension
     # or step by step: redact -> audit -> gate -> extract
 """
 from __future__ import annotations
@@ -82,7 +82,7 @@ def cmd_audit(a) -> None:
     refuse_agent_on_private(ws.dir, Path(a.denylist))
     items = _deny_items(Path(a.denylist), required=False)
     pages = ws.load_pages()
-    findings = llm.scan(ws.redacted_md.read_text(encoding="utf-8")) if a.llm else None
+    findings = llm.scan(ws.redacted_md.read_text(encoding="utf-8"), progress=True).findings if a.llm else None
     print(audit_mod.build(redact(pages, items), pages, items, findings))
 
 

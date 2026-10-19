@@ -98,6 +98,10 @@ export type Policy = {
   Summary: string
   IllustrativeOnly: boolean
   UpdatedAt: string
+  /** Market-linked plans only: latest units / NAV entered on /policies (not set by policy:apply). */
+  FundUnits?: number | null
+  FundNav?: number | null
+  FundValueDate?: string
 }
 
 export type PolicyPayout = {
@@ -175,6 +179,9 @@ export const SHEET_HEADERS: Record<SheetName, string[]> = {
     "Summary",
     "IllustrativeOnly",
     "UpdatedAt",
+    "FundUnits",
+    "FundNav",
+    "FundValueDate",
   ],
   Policy_Payouts: [
     "PayoutID",

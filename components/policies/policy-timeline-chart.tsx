@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
   type TooltipContentProps,
+  type YAxisTickContentProps,
 } from "recharts"
 
 import { TOOLTIP_STYLE } from "@/components/policies/chart-tooltip"
@@ -17,8 +18,63 @@ import type { PhaseKey, PolicyPhase } from "@/lib/policy"
 
 export type TimelineRow = {
   nickname: string
+  /** Shown on the axis; plan names read better than kebab-case nicknames. */
+  label: string
   phases: PolicyPhase[]
   payoutOpenEnded: boolean
+}
+
+const LABEL_WIDTH = 168
+const LABEL_FONT_SIZE = 12
+// Rough average glyph width for the 12px UI font; only used to decide where to wrap.
+const LABEL_CHAR_PX = 6.6
+const LABEL_MAX_LINES = 2
+
+/** Greedy word wrap into at most LABEL_MAX_LINES lines, ellipsising the last one. */
+function wrapLabel(text: string): string[] {
+  const maxChars = Math.floor((LABEL_WIDTH - 12) / LABEL_CHAR_PX)
+  const lines: string[] = []
+  let line = ""
+  for (const word of text.split(/\s+/)) {
+    const next = line ? `${line} ${word}` : word
+    if (next.length <= maxChars || !line) {
+      line = next
+    } else {
+      lines.push(line)
+      line = word
+    }
+  }
+  if (line) lines.push(line)
+  if (lines.length > LABEL_MAX_LINES) {
+    lines.length = LABEL_MAX_LINES
+    lines[LABEL_MAX_LINES - 1] = `${lines[LABEL_MAX_LINES - 1].slice(0, maxChars - 1)}…`
+  }
+  return lines.map((l) => (l.length > maxChars ? `${l.slice(0, maxChars - 1)}…` : l))
+}
+
+function TimelineLabel({ x, y, payload }: YAxisTickContentProps) {
+  const anchorX = Number(x) - 8
+  const label = String(payload.value)
+  const lines = wrapLabel(label)
+  const lineHeight = LABEL_FONT_SIZE + 3
+  const firstDy = -((lines.length - 1) * lineHeight) / 2
+  return (
+    <text
+      x={anchorX}
+      y={y}
+      textAnchor="end"
+      dominantBaseline="central"
+      fill="var(--foreground)"
+      fontSize={LABEL_FONT_SIZE}
+    >
+      <title>{label}</title>
+      {lines.map((line, i) => (
+        <tspan key={i} x={anchorX} dy={i === 0 ? firstDy : lineHeight}>
+          {line}
+        </tspan>
+      ))}
+    </text>
+  )
 }
 
 const PHASES: { key: PhaseKey; label: string; color: string }[] = [
@@ -47,7 +103,7 @@ function formatDate(iso: string): string {
 }
 
 type ChartDatum = {
-  nickname: string
+  label: string
   base: number
   premium: number
   accumulation: number
@@ -60,7 +116,8 @@ function TimelineTooltip({ active, payload }: TooltipContentProps) {
   const { row } = payload[0].payload as ChartDatum
   return (
     <div style={TOOLTIP_STYLE} className="px-3 py-2">
-      <div className="mb-1 font-medium">{row.nickname}</div>
+      <div className="font-medium">{row.label}</div>
+      <div className="text-muted-foreground mb-1 text-xs">{row.nickname}</div>
       {PHASES.map(({ key, label, color }) => {
         const phase = row.phases.find((p) => p.key === key)!
         if (phase.start === phase.end) return null
@@ -88,7 +145,7 @@ export function PolicyTimelineChart({ rows, today }: { rows: TimelineRow[]; toda
       return years
     }
     return {
-      nickname: row.nickname,
+      label: row.label,
       base: yearFraction(row.phases[0].start),
       premium: width("premium"),
       accumulation: width("accumulation"),
@@ -105,7 +162,7 @@ export function PolicyTimelineChart({ rows, today }: { rows: TimelineRow[]; toda
 
   return (
     <div>
-      <div className="w-full" style={{ height: 56 + rows.length * 44 }}>
+      <div className="w-full" style={{ height: 56 + rows.length * 48 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}
@@ -126,9 +183,10 @@ export function PolicyTimelineChart({ rows, today }: { rows: TimelineRow[]; toda
             />
             <YAxis
               type="category"
-              dataKey="nickname"
-              width={110}
-              tick={{ fill: "var(--foreground)", fontSize: 12 }}
+              dataKey="label"
+              width={LABEL_WIDTH}
+              tick={TimelineLabel}
+              interval={0}
               tickLine={false}
               axisLine={false}
             />

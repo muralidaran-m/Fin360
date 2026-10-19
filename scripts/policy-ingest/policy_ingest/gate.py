@@ -20,23 +20,27 @@ def run(ws: Workspace, deny_items: list[DenyItem], skip_llm: bool = False, assum
     survivors = denylist_survivors(deny_items, redacted)
     if survivors:
         print(f"BLOCKED: {len(survivors)} deny-list item(s) still appear in the redacted text "
-              f"(item #{', #'.join(str(i.index) for i in survivors)}). Re-run `policy-ingest redact`.")
+              f"(item #{', #'.join(str(i.index) for i in survivors)}). Re-run the redact step.")
         return False
     print(f"deny-list: {len(deny_items)} items, 0 survive.")
 
     findings: list[dict] = []
     if not skip_llm:
         if not llm.healthy():
-            print("BLOCKED: local model is not running. Start it with `policy-ingest serve` in another "
+            print("BLOCKED: local model is not running. Start it with `npm run policy:ingest -- serve` in another "
                   "terminal, or pass --skip-llm to rely on the deny-list and your own review only.")
             return False
         print("Scanning with the local model ...")
-        findings = llm.scan(redacted)
+        scan = llm.scan(redacted, progress=True)
+        findings = scan.findings
+        if scan.unscanned:
+            print(f"WARNING: {scan.unscanned} of {scan.chunks} chunk(s) could not be scanned. Review those "
+                  "parts of review.html yourself, or raise POLICY_LLM_TIMEOUT and re-run the gate.")
         if findings:
             print(f"The local model flagged {len(findings)} possible leftover(s):")
             for f in findings:
                 print(f"  - {f['type']}: {f['text']}")
-            print("If any are real, add them to the deny-list and re-run `policy-ingest redact`.")
+            print("If any are real, add them to the deny-list and re-run the redact step.")
         else:
             print("Local model: nothing flagged.")
 
@@ -53,6 +57,7 @@ def run(ws: Workspace, deny_items: list[DenyItem], skip_llm: bool = False, assum
         "approved_at": datetime.now(timezone.utc).isoformat(),
         "denylist_items": len(deny_items),
         "llm_findings": len(findings),
+        "llm_unscanned_chunks": 0 if skip_llm else scan.unscanned,
         "llm_skipped": skip_llm,
     }, indent=2))
     print(f"Approved. Gate recorded in {ws.gate_json}")
