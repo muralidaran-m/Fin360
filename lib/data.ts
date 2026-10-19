@@ -12,6 +12,8 @@ import {
   type Category,
   type Event,
   type PaymentMode,
+  type Policy,
+  type PolicyPayout,
   type SandboxPlan,
   type Setting,
   type Transaction,
@@ -24,6 +26,8 @@ const TAGS = {
   transactions: "transactions",
   sandboxPlans: "sandbox_plans",
   settings: "settings",
+  policies: "policies",
+  policyPayouts: "policy_payouts",
 } as const
 
 function parseTransaction(raw: Record<string, unknown>): Transaction {
@@ -63,6 +67,56 @@ function parseSandboxPlan(raw: Record<string, unknown>): SandboxPlan {
     CurrentSaved: Number(raw.CurrentSaved ?? 0),
     EstimatedMonthlyImpact: Number(raw.EstimatedMonthlyImpact ?? 0),
   } as SandboxPlan
+}
+
+function parseNullableNumber(value: unknown): number | null {
+  if (value === undefined || value === null || value === "") return null
+  const n = Number(value)
+  return Number.isFinite(n) ? n : null
+}
+
+function parseBoolean(value: unknown): boolean {
+  return value === true || value === "TRUE"
+}
+
+function parseStringArray(value: unknown): string[] {
+  if (typeof value !== "string" || value === "") return []
+  try {
+    const parsed: unknown = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === "string") : []
+  } catch {
+    return []
+  }
+}
+
+function parsePolicy(raw: Record<string, unknown>): Policy {
+  return {
+    ...raw,
+    PolicyNoLast4: String(raw.PolicyNoLast4 ?? ""),
+    MaturityDate: String(raw.MaturityDate ?? ""),
+    VestingDate: String(raw.VestingDate ?? ""),
+    PremiumAmount: parseNullableNumber(raw.PremiumAmount),
+    PremiumPayingTermYrs: parseNullableNumber(raw.PremiumPayingTermYrs),
+    PolicyTermYrs: parseNullableNumber(raw.PolicyTermYrs),
+    SumAssured: parseNullableNumber(raw.SumAssured),
+    LockInYrs: parseNullableNumber(raw.LockInYrs),
+    Riders: parseStringArray(raw.Riders),
+    Benefits: parseStringArray(raw.Benefits),
+    Summary: String(raw.Summary ?? ""),
+    IllustrativeOnly: parseBoolean(raw.IllustrativeOnly),
+  } as Policy
+}
+
+function parsePolicyPayout(raw: Record<string, unknown>): PolicyPayout {
+  return {
+    ...raw,
+    Date: String(raw.Date ?? ""),
+    Age: parseNullableNumber(raw.Age),
+    Amount: parseNullableNumber(raw.Amount),
+    Percent: parseNullableNumber(raw.Percent),
+    Guaranteed: parseBoolean(raw.Guaranteed),
+    Note: String(raw.Note ?? ""),
+  } as PolicyPayout
 }
 
 export const getCategories = cache(
@@ -105,6 +159,24 @@ export const getSandboxPlans = cache(
   },
   ["sandbox_plans"],
   { tags: [TAGS.sandboxPlans] }
+)
+
+export const getPolicies = cache(
+  async (): Promise<Policy[]> => {
+    const rows = await getRows<Record<string, unknown>>(SHEET_NAMES.Policies)
+    return rows.map(parsePolicy)
+  },
+  ["policies"],
+  { tags: [TAGS.policies] }
+)
+
+export const getPolicyPayouts = cache(
+  async (): Promise<PolicyPayout[]> => {
+    const rows = await getRows<Record<string, unknown>>(SHEET_NAMES.PolicyPayouts)
+    return rows.map(parsePolicyPayout)
+  },
+  ["policy_payouts"],
+  { tags: [TAGS.policyPayouts] }
 )
 
 const getSettingsRaw = cache(
