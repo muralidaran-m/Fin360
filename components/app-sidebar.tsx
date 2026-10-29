@@ -6,6 +6,7 @@ import {
   PiggyBank,
   Receipt,
   Settings as SettingsIcon,
+  ShieldCheck,
   Target,
   type LucideIcon,
 } from "lucide-react"
@@ -48,6 +49,12 @@ const NAV_ITEMS: {
     label: "Planner",
     icon: Target,
     colorVar: "--section-planner",
+  },
+  {
+    href: "/policies",
+    label: "Policies",
+    icon: ShieldCheck,
+    colorVar: "--section-policies",
   },
   {
     href: "/settings",

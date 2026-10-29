@@ -45,6 +45,7 @@
   --color-section-transactions: var(--section-transactions);
   --color-section-budget: var(--section-budget);
   --color-section-planner: var(--section-planner);
+  --color-section-policies: var(--section-policies);
   --color-section-settings: var(--section-settings);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -98,6 +99,7 @@
   --section-transactions: #b8791f;
   --section-budget: #2563eb;
   --section-planner: #7c3aed;
+  --section-policies: #0e7490;
   --section-settings: #55606b;
 }
 
@@ -139,6 +141,7 @@
   --section-transactions: #e0b878;
   --section-budget: #60a5fa;
   --section-planner: #b794f6;
+  --section-policies: #5cc8dc;
   --section-settings: #9fb0a8;
 }
 

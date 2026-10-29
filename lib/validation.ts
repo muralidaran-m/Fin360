@@ -48,6 +48,21 @@ export const eventSchema = z.object({
 
 export type EventFormValues = z.infer<typeof eventSchema>
 
+export const fundValueSchema = z.object({
+  FundUnits: z.coerce
+    .number({ invalid_type_error: "Units are required" })
+    .positive("Units must be greater than 0"),
+  FundNav: z.coerce
+    .number({ invalid_type_error: "NAV is required" })
+    .positive("NAV must be greater than 0"),
+  FundValueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date is required")
+    .refine((d) => d <= new Date().toISOString().slice(0, 10), "Date can't be in the future"),
+})
+
+export type FundValueFormValues = z.infer<typeof fundValueSchema>
+
 export const transactionSchema = z.object({
   Amount: z.coerce
     .number({ invalid_type_error: "Amount is required" })
@@ -88,3 +103,73 @@ export const sandboxPlanSchema = z.object({
 })
 
 export type SandboxPlanFormValues = z.infer<typeof sandboxPlanSchema>
+
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD")
+const money = z.number().nonnegative()
+
+export const POLICY_TYPES = ["retirement", "child", "ulip", "mf"] as const
+export const PREMIUM_FREQUENCIES = [
+  "annual",
+  "half-yearly",
+  "quarterly",
+  "monthly",
+  "single",
+] as const
+export const PAYOUT_KINDS = [
+  "survival_benefit",
+  "maturity",
+  "annuity",
+  "child_milestone",
+] as const
+
+/**
+ * Contract for the plan JSON produced by scripts/policy-ingest (the PII-redacting
+ * sidecar). Strict: unknown keys are rejected so nothing beyond these non-PII
+ * fields can slip into the sheet.
+ */
+export const policyPlanSchema = z
+  .object({
+    policy: z
+      .object({
+        nickname: z.string().trim().min(1).max(60),
+        insurer: z.string().trim().min(1).max(80),
+        planName: z.string().trim().min(1).max(120),
+        type: z.enum(POLICY_TYPES),
+        policyNoLast4: z
+          .string()
+          .regex(/^[A-Za-z0-9]{1,4}$/, "At most 4 alphanumeric characters")
+          .nullable(),
+        startDate: isoDate,
+        premiumAmount: money.nullable(),
+        premiumFrequency: z.enum(PREMIUM_FREQUENCIES),
+        premiumPayingTermYrs: z.number().int().positive().max(100).nullable(),
+        policyTermYrs: z.number().int().positive().max(100).nullable(),
+        maturityDate: isoDate.nullable(),
+        vestingDate: isoDate.nullable(),
+        sumAssured: money.nullable(),
+        lockInYrs: z.number().int().nonnegative().max(100).nullable(),
+        riders: z.array(z.string().trim().min(1).max(120)).max(30),
+        benefits: z.array(z.string().trim().min(1).max(300)).max(30),
+        summary: z.string().trim().max(1000),
+        illustrativeOnly: z.boolean(),
+      })
+      .strict(),
+    payouts: z
+      .array(
+        z
+          .object({
+            date: isoDate.nullable(),
+            age: z.number().int().nonnegative().max(120).nullable(),
+            amount: money.nullable(),
+            percent: z.number().nonnegative().max(1000).nullable(),
+            kind: z.enum(PAYOUT_KINDS),
+            guaranteed: z.boolean(),
+            note: z.string().trim().max(300),
+          })
+          .strict()
+      )
+      .max(200),
+  })
+  .strict()
+
+export type PolicyPlan = z.infer<typeof policyPlanSchema>

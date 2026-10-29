@@ -43,3 +43,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# real policy documents, PII vault and deny-list (never commit, never shown to the coding agent)
+/private/

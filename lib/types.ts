@@ -68,6 +68,54 @@ export type SandboxPlan = {
   EstimatedMonthlyImpact: number
 }
 
+export type PolicyType = "retirement" | "child" | "ulip" | "mf"
+
+export type PremiumFrequency = "annual" | "half-yearly" | "quarterly" | "monthly" | "single"
+
+export type PayoutKind = "survival_benefit" | "maturity" | "annuity" | "child_milestone"
+
+/** Non-PII facts about an insurance policy / fund, as applied from a reviewed plan JSON. */
+export type Policy = {
+  PolicyID: string
+  Nickname: string
+  Insurer: string
+  PlanName: string
+  Type: PolicyType
+  PolicyNoLast4: string
+  StartDate: string
+  PremiumAmount: number | null
+  PremiumFrequency: PremiumFrequency
+  PremiumPayingTermYrs: number | null
+  PolicyTermYrs: number | null
+  MaturityDate: string
+  VestingDate: string
+  SumAssured: number | null
+  LockInYrs: number | null
+  /** Stored in the sheet as a JSON array string. */
+  Riders: string[]
+  /** Stored in the sheet as a JSON array string. */
+  Benefits: string[]
+  Summary: string
+  IllustrativeOnly: boolean
+  UpdatedAt: string
+  /** Market-linked plans only: latest units / NAV entered on /policies (not set by policy:apply). */
+  FundUnits?: number | null
+  FundNav?: number | null
+  FundValueDate?: string
+}
+
+export type PolicyPayout = {
+  PayoutID: string
+  PolicyID: string
+  Date: string
+  Age: number | null
+  Amount: number | null
+  Percent: number | null
+  Kind: PayoutKind
+  Guaranteed: boolean
+  Note: string
+}
+
 export const SHEET_NAMES = {
   Categories: "Categories",
   PaymentModes: "Payment_Modes",
@@ -75,6 +123,8 @@ export const SHEET_NAMES = {
   Transactions: "Transactions",
   SandboxPlans: "Sandbox_Plans",
   Settings: "Settings",
+  Policies: "Policies",
+  PolicyPayouts: "Policy_Payouts",
 } as const
 
 export type SheetName = (typeof SHEET_NAMES)[keyof typeof SHEET_NAMES]
@@ -108,4 +158,40 @@ export const SHEET_HEADERS: Record<SheetName, string[]> = {
     "EstimatedMonthlyImpact",
   ],
   Settings: ["Key", "Value"],
+  Policies: [
+    "PolicyID",
+    "Nickname",
+    "Insurer",
+    "PlanName",
+    "Type",
+    "PolicyNoLast4",
+    "StartDate",
+    "PremiumAmount",
+    "PremiumFrequency",
+    "PremiumPayingTermYrs",
+    "PolicyTermYrs",
+    "MaturityDate",
+    "VestingDate",
+    "SumAssured",
+    "LockInYrs",
+    "Riders",
+    "Benefits",
+    "Summary",
+    "IllustrativeOnly",
+    "UpdatedAt",
+    "FundUnits",
+    "FundNav",
+    "FundValueDate",
+  ],
+  Policy_Payouts: [
+    "PayoutID",
+    "PolicyID",
+    "Date",
+    "Age",
+    "Amount",
+    "Percent",
+    "Kind",
+    "Guaranteed",
+    "Note",
+  ],
 }

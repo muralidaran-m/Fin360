@@ -9,7 +9,10 @@
     "lint": "eslint",
     "init-sheets": "tsx scripts/init-sheets.ts",
     "cleanup-sheets": "tsx scripts/cleanup-sheets.ts",
-    "backfill:paytm": "tsx scripts/backfill-paytm.ts"
+    "backfill:paytm": "tsx scripts/backfill-paytm.ts",
+    "policy:ingest": "uv run --project scripts/policy-ingest policy-ingest",
+    "policy:apply": "tsx scripts/apply-policy.ts",
+    "test": "tsx --test lib/policy.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
