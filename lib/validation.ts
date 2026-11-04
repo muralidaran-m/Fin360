@@ -173,3 +173,9 @@ export const policyPlanSchema = z
   .strict()
 
 export type PolicyPlan = z.infer<typeof policyPlanSchema>
+
+export const cardBillPaidSchema = z.object({
+  paymentModeId: z.string().min(1),
+  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  paid: z.boolean(),
+})

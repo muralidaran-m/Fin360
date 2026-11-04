@@ -1,4 +1,10 @@
-import { computeBillDate, getEffectiveDate, parseIsoDate, statementPeriod } from "@/lib/credit-card"
+import {
+  billId,
+  computeBillDate,
+  getEffectiveDate,
+  parseIsoDate,
+  statementPeriod,
+} from "@/lib/credit-card"
 import type { AddedBy, Category, CategoryType, PaymentMode, Transaction } from "@/lib/types"
 
 export type Timeframe = "current" | "last" | "ytd"
@@ -304,10 +310,13 @@ export function creditCardCycleSummaries(
 export type CreditCardBillStatus = "upcoming" | "open" | "due" | "past"
 
 export type CreditCardBill = {
+  id: string
   dueDate: string
   /** Purchase window of the statement; null when the date doesn't fit the card's cycle. */
   period: { start: string; end: string } | null
   status: CreditCardBillStatus
+  /** Only ever true for a closed bill ("due" or "past"); anything else is still accruing. */
+  paid: boolean
   daysUntilDue: number
   /** Sum of expenses, the same figure the dashboard's current-cycle card shows. */
   amount: number
@@ -332,13 +341,14 @@ export type CreditCardBillHistory = {
  * later. Rows saved without a BillDate (e.g. backfilled ones) are placed by
  * purchase date. The open cycle is always listed, even before any spend on it.
  *
- * "due" means the statement has closed and its due date hasn't passed; payments
- * aren't tracked, so nothing here says whether a bill was actually paid.
+ * "due" means the statement has closed and its due date hasn't passed. `paid` is
+ * whatever was recorded by hand, as listed in `paidBillIds`; it isn't inferred.
  */
 export function creditCardBillHistories(
   transactions: Transaction[],
   paymentModes: PaymentMode[],
-  now = new Date()
+  now = new Date(),
+  paidBillIds: ReadonlySet<string> = new Set()
 ): CreditCardBillHistory[] {
   const today = toISODate(now)
 
@@ -366,10 +376,15 @@ export function creditCardBillHistories(
           else if (openDueDate && dueDate > openDueDate) status = "upcoming"
           else status = dueDate >= today ? "due" : "past"
 
+          const id = billId(card.PaymentModeID, dueDate)
+          const closed = status === "due" || status === "past"
+
           return {
+            id,
             dueDate,
             period: statementPeriod(dueDate, card),
             status,
+            paid: closed && paidBillIds.has(id),
             daysUntilDue: Math.round(
               (parseIsoDate(dueDate).getTime() - parseIsoDate(today).getTime()) /
                 (1000 * 60 * 60 * 24)

@@ -132,6 +132,32 @@ describe("creditCardBillHistories", () => {
     assert.equal(result[0].bills.length, 1)
   })
 
+  it("marks only closed bills as paid", () => {
+    const txs = [tx({ BillDate: "2026-11-06" }), tx({ BillDate: "2026-09-06" })]
+    const paid = new Set(["card:2026-11-06", "card:2026-12-07"])
+    const [{ bills }] = creditCardBillHistories(txs, [card], NOW, paid)
+    assert.deepEqual(
+      bills.map((b) => [b.dueDate, b.status, b.paid]),
+      [
+        ["2026-12-07", "open", false],
+        ["2026-11-06", "due", true],
+        ["2026-09-06", "past", false],
+      ]
+    )
+  })
+
+  it("defaults every bill to unpaid and keeps paid scoped to its card", () => {
+    const other: PaymentMode = { ...card, PaymentModeID: "other" }
+    const txs = [
+      tx({ BillDate: "2026-09-06" }),
+      tx({ PaymentModeID: "other", BillDate: "2026-09-06" }),
+    ]
+    assert.equal(history(txs)[0].bills[1].paid, false)
+    const result = creditCardBillHistories(txs, [card, other], NOW, new Set(["other:2026-09-06"]))
+    assert.equal(result[0].bills[1].paid, false)
+    assert.equal(result[1].bills[1].paid, true)
+  })
+
   it("still lists bills for a card with no cycle configured", () => {
     const unconfigured = { ...card, StatementDay: 0, DueDays: 0 }
     const [{ bills }] = history([tx({ BillDate: "2026-09-01" })], NOW, [unconfigured])

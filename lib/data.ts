@@ -3,12 +3,14 @@ import "server-only"
 import { unstable_cache as cache, updateTag } from "next/cache"
 import { v4 as uuid } from "uuid"
 
+import { billId } from "@/lib/credit-card"
 import { appendRow, deleteRow, getRows, updateRow, upsertRow } from "@/lib/sheets"
 import {
   DEFAULT_ADDED_BY_NAMES,
   SETTING_KEYS,
   SHEET_NAMES,
   type AddedBy,
+  type CardBillPayment,
   type Category,
   type Event,
   type PaymentMode,
@@ -28,6 +30,7 @@ const TAGS = {
   settings: "settings",
   policies: "policies",
   policyPayouts: "policy_payouts",
+  cardBillPayments: "card_bill_payments",
 } as const
 
 function parseTransaction(raw: Record<string, unknown>): Transaction {
@@ -186,6 +189,22 @@ export const getPolicyPayouts = cache(
   { tags: [TAGS.policyPayouts], revalidate: POLICY_CACHE_SECONDS }
 )
 
+export const getCardBillPayments = cache(
+  async (): Promise<CardBillPayment[]> => {
+    const rows = await getRows<Record<string, unknown>>(SHEET_NAMES.CardBillPayments)
+    return rows.map(
+      (raw) =>
+        ({
+          ...raw,
+          DueDate: String(raw.DueDate ?? ""),
+          Paid: parseBoolean(raw.Paid),
+        }) as CardBillPayment
+    )
+  },
+  ["card_bill_payments"],
+  { tags: [TAGS.cardBillPayments] }
+)
+
 const getSettingsRaw = cache(
   async (): Promise<Setting[]> => getRows<Setting>(SHEET_NAMES.Settings),
   ["settings"],
@@ -341,4 +360,18 @@ export async function updatePolicyFundValue(
     UpdatedAt: new Date().toISOString(),
   })
   updateTag(TAGS.policies)
+}
+
+export async function setCardBillPaid(
+  paymentModeId: string,
+  dueDate: string,
+  paid: boolean
+): Promise<void> {
+  await upsertRow(SHEET_NAMES.CardBillPayments, "BillID", billId(paymentModeId, dueDate), {
+    PaymentModeID: paymentModeId,
+    DueDate: dueDate,
+    Paid: paid,
+    UpdatedAt: new Date().toISOString(),
+  })
+  updateTag(TAGS.cardBillPayments)
 }

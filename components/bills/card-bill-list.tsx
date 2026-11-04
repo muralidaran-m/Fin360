@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 
+import { BillPaidToggle } from "@/components/bills/bill-paid-toggle"
 import { TransactionList } from "@/components/transactions/transaction-list"
 import {
   Accordion,
@@ -44,7 +45,7 @@ function periodLabel(bill: CreditCardBill): string {
 function StatusBadge({ bill }: { bill: CreditCardBill }) {
   if (bill.status === "open") return <Badge variant="secondary">Current cycle</Badge>
   if (bill.status === "upcoming") return <Badge variant="outline">Upcoming</Badge>
-  if (bill.status === "due") {
+  if (bill.status === "due" && !bill.paid) {
     const days = bill.daysUntilDue
     const label =
       days === 0 ? "Due today" : `Due in ${days} ${days === 1 ? "day" : "days"}`
@@ -58,14 +59,18 @@ function StatusBadge({ bill }: { bill: CreditCardBill }) {
 }
 
 export function CardBillList({
+  paymentModeId,
   bills,
+  canTrackPaid,
   categoriesById,
   categories,
   paymentModes,
   events,
   addedByNames,
 }: {
+  paymentModeId: string
   bills: CreditCardBill[]
+  canTrackPaid: boolean
   categoriesById: Map<string, Category>
   categories: Category[]
   paymentModes: PaymentMode[]
@@ -81,29 +86,45 @@ export function CardBillList({
     <Accordion value={openBills} onValueChange={setOpenBills} multiple>
       {bills.map((bill) => {
         const count = bill.transactions.length
+        const closed = bill.status === "due" || bill.status === "past"
         return (
           <AccordionItem key={bill.dueDate} value={bill.dueDate}>
-            <AccordionTrigger>
-              <div className="mr-auto min-w-0">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <span className="text-sm font-semibold">
-                    Due {DUE_DATE_FORMATTER.format(parseIsoDate(bill.dueDate))}
-                  </span>
-                  <StatusBadge bill={bill} />
+            {/* The toggle is a sibling of the trigger, as buttons can't nest; it drops below on phones. */}
+            <div className="flex flex-wrap items-center gap-x-3">
+              <div className="min-w-0 basis-full sm:basis-0 sm:flex-1">
+                <AccordionTrigger>
+                  <div className="mr-auto min-w-0">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="text-sm font-semibold">
+                        Due {DUE_DATE_FORMATTER.format(parseIsoDate(bill.dueDate))}
+                      </span>
+                      <StatusBadge bill={bill} />
+                    </div>
+                    <p className="text-muted-foreground mt-0.5 text-xs font-normal">
+                      {periodLabel(bill)} · {count} {count === 1 ? "transaction" : "transactions"}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="text-sm font-semibold">₹{bill.amount.toFixed(2)}</p>
+                    {bill.credits > 0 ? (
+                      <p className="text-xs font-normal text-emerald-600">
+                        +₹{bill.credits.toFixed(2)} credited
+                      </p>
+                    ) : null}
+                  </div>
+                </AccordionTrigger>
+              </div>
+              {closed && canTrackPaid ? (
+                <div className="pb-2.5 sm:pb-0">
+                  <BillPaidToggle
+                    paymentModeId={paymentModeId}
+                    dueDate={bill.dueDate}
+                    paid={bill.paid}
+                    overdue={bill.status === "past"}
+                  />
                 </div>
-                <p className="text-muted-foreground mt-0.5 text-xs font-normal">
-                  {periodLabel(bill)} · {count} {count === 1 ? "transaction" : "transactions"}
-                </p>
-              </div>
-              <div className="shrink-0 text-right">
-                <p className="text-sm font-semibold">₹{bill.amount.toFixed(2)}</p>
-                {bill.credits > 0 ? (
-                  <p className="text-xs font-normal text-emerald-600">
-                    +₹{bill.credits.toFixed(2)} credited
-                  </p>
-                ) : null}
-              </div>
-            </AccordionTrigger>
+              ) : null}
+            </div>
             <AccordionPanel>
               <TransactionList
                 transactions={sortTransactionsByRecency(bill.transactions)}

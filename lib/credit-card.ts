@@ -82,3 +82,8 @@ export function statementPeriod(
   )
   return { start: toISODate(new Date(prevYear, prevMonth, prevStatementDay + 1)), end }
 }
+
+/** Identifies a bill across renders and in the Card_Bill_Payments sheet. */
+export function billId(paymentModeId: string, dueDate: string): string {
+  return `${paymentModeId}:${dueDate}`
+}
