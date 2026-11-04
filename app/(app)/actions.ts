@@ -10,6 +10,7 @@ import {
   deleteEvent,
   deletePaymentMode,
   deleteTransaction,
+  setCardBillPaid,
   updateAddedByNames,
   updateCategory,
   updateEvent,
@@ -18,6 +19,7 @@ import {
   updateTransaction,
 } from "@/lib/data"
 import {
+  cardBillPaidSchema,
   categorySchema,
   eventSchema,
   fundValueSchema,
@@ -341,4 +343,18 @@ export async function updatePolicyFundValueAction(
     return { error: parsed.error.issues[0]?.message ?? "Invalid fund value" }
   }
   return toActionState(() => updatePolicyFundValue(policyId, parsed.data))
+}
+
+export async function setCardBillPaidAction(
+  paymentModeId: string,
+  dueDate: string,
+  paid: boolean
+): Promise<ActionState> {
+  const parsed = cardBillPaidSchema.safeParse({ paymentModeId, dueDate, paid })
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid bill" }
+  }
+  return toActionState(() =>
+    setCardBillPaid(parsed.data.paymentModeId, parsed.data.dueDate, parsed.data.paid)
+  )
 }

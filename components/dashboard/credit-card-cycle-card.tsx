@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { CreditCardCycleSummary } from "@/lib/analytics"
 import { cn } from "@/lib/utils"
@@ -15,11 +17,17 @@ export function CreditCardCycleCard({ summary }: { summary: CreditCardCycleSumma
 
   return (
     <Card size="sm">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between gap-2">
         <CardTitle className="text-muted-foreground text-sm font-normal">
           {summary.paymentModeName}
           <span className="ml-1">· Current cycle</span>
         </CardTitle>
+        <Link
+          href={`/bills#${summary.paymentModeId}`}
+          className="text-muted-foreground hover:text-foreground shrink-0 text-xs"
+        >
+          Past bills
+        </Link>
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">

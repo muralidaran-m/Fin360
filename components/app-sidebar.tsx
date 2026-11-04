@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  CreditCard,
   LayoutDashboard,
   Menu,
   PiggyBank,
@@ -37,6 +38,12 @@ const NAV_ITEMS: {
     label: "Transactions",
     icon: Receipt,
     colorVar: "--section-transactions",
+  },
+  {
+    href: "/bills",
+    label: "Card Bills",
+    icon: CreditCard,
+    colorVar: "--section-bills",
   },
   {
     href: "/budget",

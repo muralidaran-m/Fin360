@@ -23,6 +23,7 @@ export function TransactionRow({
   categories,
   paymentModes,
   events,
+  hideBillBadge = false,
 }: {
   transaction: Transaction
   category: Category | undefined
@@ -30,6 +31,7 @@ export function TransactionRow({
   categories: Category[]
   paymentModes: PaymentMode[]
   events: Event[]
+  hideBillBadge?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const [localCategories, setLocalCategories] = useState(categories)
@@ -70,7 +72,7 @@ export function TransactionRow({
                   {tx.EventName}
                 </Badge>
               ) : null}
-              {billedInDifferentMonth ? (
+              {billedInDifferentMonth && !hideBillBadge ? (
                 <Badge variant="outline" className="text-xs">
                   Billed {BILL_MONTH_FORMATTER.format(parseIsoDate(effectiveDate))}
                 </Badge>
@@ -143,6 +145,7 @@ export function TransactionList({
   events,
   addedByNames,
   emptyMessage = "No transactions yet. Tap the + button to add one.",
+  hideBillBadge = false,
 }: {
   transactions: Transaction[]
   categoriesById: Map<string, Category>
@@ -151,6 +154,7 @@ export function TransactionList({
   events: Event[]
   addedByNames: Record<AddedBy, string>
   emptyMessage?: string
+  hideBillBadge?: boolean
 }) {
   if (transactions.length === 0) {
     return <p className="text-muted-foreground text-sm">{emptyMessage}</p>
@@ -167,6 +171,7 @@ export function TransactionList({
           categories={categories}
           paymentModes={paymentModes}
           events={events}
+          hideBillBadge={hideBillBadge}
         />
       ))}
     </ul>

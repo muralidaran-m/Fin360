@@ -44,6 +44,15 @@ export type Transaction = {
   BillDate: string
 }
 
+/** Paid status of a credit card bill. Bills themselves are derived from transactions. */
+export type CardBillPayment = {
+  BillID: string
+  PaymentModeID: string
+  DueDate: string
+  Paid: boolean
+  UpdatedAt: string
+}
+
 export type Setting = {
   Key: string
   Value: string
@@ -125,6 +134,7 @@ export const SHEET_NAMES = {
   Settings: "Settings",
   Policies: "Policies",
   PolicyPayouts: "Policy_Payouts",
+  CardBillPayments: "Card_Bill_Payments",
 } as const
 
 export type SheetName = (typeof SHEET_NAMES)[keyof typeof SHEET_NAMES]
@@ -194,4 +204,5 @@ export const SHEET_HEADERS: Record<SheetName, string[]> = {
     "Guaranteed",
     "Note",
   ],
+  Card_Bill_Payments: ["BillID", "PaymentModeID", "DueDate", "Paid", "UpdatedAt"],
 }
