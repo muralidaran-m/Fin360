@@ -43,6 +43,7 @@
   --color-card: var(--card);
   --color-section-dashboard: var(--section-dashboard);
   --color-section-transactions: var(--section-transactions);
+  --color-section-bills: var(--section-bills);
   --color-section-budget: var(--section-budget);
   --color-section-planner: var(--section-planner);
   --color-section-policies: var(--section-policies);
@@ -97,6 +98,7 @@
   --sidebar-ring: #35b6a0;
   --section-dashboard: #1f8a76;
   --section-transactions: #b8791f;
+  --section-bills: #be3a5c;
   --section-budget: #2563eb;
   --section-planner: #7c3aed;
   --section-policies: #0e7490;
@@ -139,6 +141,7 @@
   --sidebar-ring: #35b6a0;
   --section-dashboard: #35b6a0;
   --section-transactions: #e0b878;
+  --section-bills: #f28ba5;
   --section-budget: #60a5fa;
   --section-planner: #b794f6;
   --section-policies: #5cc8dc;

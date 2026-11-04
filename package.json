@@ -12,7 +12,7 @@
     "backfill:paytm": "tsx scripts/backfill-paytm.ts",
     "policy:ingest": "uv run --project scripts/policy-ingest policy-ingest",
     "policy:apply": "tsx scripts/apply-policy.ts",
-    "test": "tsx --test lib/policy.test.ts"
+    "test": "tsx --test lib/policy.test.ts lib/analytics.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

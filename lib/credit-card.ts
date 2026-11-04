@@ -55,3 +55,30 @@ export function computeBillDate(purchaseDate: string, cycle: BillingCycle): stri
 export function getEffectiveDate(tx: Pick<Transaction, "Date" | "BillDate">): string {
   return tx.BillDate || tx.Date
 }
+
+/**
+ * The purchase-date window of the statement a bill date belongs to: the day
+ * after the previous statement through the statement date itself. Returns null
+ * when the bill date doesn't fit the card's cycle — it was edited by hand, or
+ * the card's StatementDay/DueDays changed after the transaction was saved — as
+ * the window can't be recovered from the current settings in those cases.
+ */
+export function statementPeriod(
+  billDate: string,
+  cycle: BillingCycle
+): { start: string; end: string } | null {
+  if (cycle.StatementDay <= 0 || cycle.DueDays <= 0) return null
+
+  const due = parseIsoDate(billDate)
+  const statement = new Date(due.getFullYear(), due.getMonth(), due.getDate() - cycle.DueDays)
+  const end = toISODate(statement)
+  if (computeBillDate(end, cycle) !== billDate) return null
+
+  const prevYear = statement.getFullYear()
+  const prevMonth = statement.getMonth() - 1
+  const prevStatementDay = Math.min(
+    cycle.StatementDay,
+    new Date(prevYear, prevMonth + 1, 0).getDate()
+  )
+  return { start: toISODate(new Date(prevYear, prevMonth, prevStatementDay + 1)), end }
+}

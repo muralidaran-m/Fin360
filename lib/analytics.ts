@@ -1,4 +1,4 @@
-import { computeBillDate, getEffectiveDate, parseIsoDate } from "@/lib/credit-card"
+import { computeBillDate, getEffectiveDate, parseIsoDate, statementPeriod } from "@/lib/credit-card"
 import type { AddedBy, Category, CategoryType, PaymentMode, Transaction } from "@/lib/types"
 
 export type Timeframe = "current" | "last" | "ytd"
@@ -297,6 +297,95 @@ export function creditCardCycleSummaries(
         dueDate,
         daysRemaining,
         amount,
+      }
+    })
+}
+
+export type CreditCardBillStatus = "upcoming" | "open" | "due" | "past"
+
+export type CreditCardBill = {
+  dueDate: string
+  /** Purchase window of the statement; null when the date doesn't fit the card's cycle. */
+  period: { start: string; end: string } | null
+  status: CreditCardBillStatus
+  daysUntilDue: number
+  /** Sum of expenses, the same figure the dashboard's current-cycle card shows. */
+  amount: number
+  /** Sum of refunds/income logged on the card, reported apart from `amount`. */
+  credits: number
+  transactions: Transaction[]
+}
+
+export type CreditCardBillHistory = {
+  paymentModeId: string
+  paymentModeName: string
+  statementDay: number
+  dueDays: number
+  /** Newest first. */
+  bills: CreditCardBill[]
+}
+
+/**
+ * Every bill per credit card, derived from transactions rather than stored, so
+ * editing an old transaction is reflected here too. Bills are keyed by the
+ * stored BillDate, which keeps old cycles intact if the card's settings change
+ * later. Rows saved without a BillDate (e.g. backfilled ones) are placed by
+ * purchase date. The open cycle is always listed, even before any spend on it.
+ *
+ * "due" means the statement has closed and its due date hasn't passed; payments
+ * aren't tracked, so nothing here says whether a bill was actually paid.
+ */
+export function creditCardBillHistories(
+  transactions: Transaction[],
+  paymentModes: PaymentMode[],
+  now = new Date()
+): CreditCardBillHistory[] {
+  const today = toISODate(now)
+
+  return paymentModes
+    .filter((p) => p.Kind === "CreditCard")
+    .map((card) => {
+      const configured = card.StatementDay > 0 && card.DueDays > 0
+      const openDueDate = configured ? computeBillDate(today, card) : null
+
+      const byDueDate = new Map<string, Transaction[]>()
+      if (openDueDate) byDueDate.set(openDueDate, [])
+      for (const tx of transactions) {
+        if (tx.PaymentModeID !== card.PaymentModeID) continue
+        const dueDate = tx.BillDate || (configured ? computeBillDate(tx.Date, card) : tx.Date)
+        const bucket = byDueDate.get(dueDate)
+        if (bucket) bucket.push(tx)
+        else byDueDate.set(dueDate, [tx])
+      }
+
+      const bills = [...byDueDate.entries()]
+        .sort(([a], [b]) => b.localeCompare(a))
+        .map(([dueDate, txs]): CreditCardBill => {
+          let status: CreditCardBillStatus
+          if (dueDate === openDueDate) status = "open"
+          else if (openDueDate && dueDate > openDueDate) status = "upcoming"
+          else status = dueDate >= today ? "due" : "past"
+
+          return {
+            dueDate,
+            period: statementPeriod(dueDate, card),
+            status,
+            daysUntilDue: Math.round(
+              (parseIsoDate(dueDate).getTime() - parseIsoDate(today).getTime()) /
+                (1000 * 60 * 60 * 24)
+            ),
+            amount: txs.filter((t) => t.Type === "Expense").reduce((sum, t) => sum + t.Amount, 0),
+            credits: txs.filter((t) => t.Type === "Income").reduce((sum, t) => sum + t.Amount, 0),
+            transactions: txs,
+          }
+        })
+
+      return {
+        paymentModeId: card.PaymentModeID,
+        paymentModeName: card.Name,
+        statementDay: card.StatementDay,
+        dueDays: card.DueDays,
+        bills,
       }
     })
 }
